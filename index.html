@@ -330,7 +330,7 @@
             tableBody.innerHTML = '';
             tableData = [];
             let Offices = new Set();
-            let periods = new Set();
+            let Branches = new Set();
 
             if (data.length > 0) {
                 Object.keys(data[0]).forEach(header => {
@@ -364,11 +364,11 @@
                     tableBody.appendChild(tr);
                     tableData.push(row);
                     Offices.add(row['Office']);
-                    periods.add(row['Main Branch']);
+                    Branches.add(row['Main Branch']);
                 });
 
                 updateFilterOptions1(OfficeFilter, Offices);
-                updateFilterOptions2(BranchFilter, periods);
+                updateFilterOptions2(BranchFilter, Branches);
             }
         }
 
@@ -407,8 +407,8 @@
                 //                         cells[2].textContent.toLowerCase().includes(searchValue);
 
                 //let positionMatch = positionValue === "" || cells[3].textContent.trim().toLowerCase().includes(positionValue);
-                let OfficeMatch = OfficeValue === "" || cells[0].textContent.toLowerCase() === OfficeValue;
-                let BranchMatch = BranchValue === "" || cells[1].textContent.toLowerCase() === BranchValue;             
+                let OfficeMatch = OfficeValue === "" || cells[1].textContent.toLowerCase() === OfficeValue;
+                let BranchMatch = BranchValue === "" || cells[0].textContent.toLowerCase() === BranchValue;             
                 //let zeroMTDMatch = zeroMTDValue === "" || cells[5].textContent.toLowerCase() === zeroMTDValue;             
                 //let zeroDTDMatch = zeroDTDValue === "" || cells[6].textContent.toLowerCase() === zeroDTDValue;             
 
