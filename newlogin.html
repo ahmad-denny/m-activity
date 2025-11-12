@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, purple 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            z-index: 0;
+        }
+        
+        .form-container {
+            position: relative;
+            z-index: 1;
+        }
+        
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, purple 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #667eea;
+            border: 2px solid #e1e1e1;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        
+        .form-footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .form-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .form-footer a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        
+        .form-switch {
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+        }
+        
+        .form-switch a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .form-switch a:hover {
+            text-decoration: underline;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .form-title {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-title button {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #999;
+            transition: all 0.3s ease;
+        }
+        
+        .form-title button.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="form-title">
+                <button id="loginTab" class="active">Login</button>
+                <button id="registerTab">Register</button>
+            </div>
+            
+            <div id="message" class="message"></div>
+            
+
+            <!-- Login Form -->
+            <form id="loginForm" class="form">
+                <h2>Welcome Back</h2>
+                <div class="form-group">
+                    <label for="loginUser">User</label>
+                    <input type="User" id="loginUser" required placeholder="Enter your User">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password">
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+                <div class="form-footer">
+                    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+                </div>
+            </form>
+            
+            <!-- Register Form -->
+            <form id="registerForm" class="form hidden">
+                <h2>Create Account</h2>
+                <div class="form-group">
+                    <label for="registerName">Full Name</label>
+                    <input type="text" id="registerName" required placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label for="registerUser">User</label>
+                    <input type="User" id="registerUser" required placeholder="Enter your User">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" required placeholder="Create a password">
+                </div>
+                <div class="form-group">
+                    <label for="registerConfirmPassword">Confirm Password</label>
+                    <input type="password" id="registerConfirmPassword" required placeholder="Confirm your password">
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+            
+            <!-- Forgot Password Form -->
+            <form id="forgotPasswordForm" class="form hidden">
+                <h2>Reset Password</h2>
+                <div class="form-group">
+                    <label for="forgotUser">User</label>
+                    <input type="User" id="forgotUser" required placeholder="Enter your User">
+                </div>
+                <button type="submit" class="btn btn-primary">Send Reset Link</button>
+                <div class="form-switch">
+                    <a id="backToLogin">Back to Login</a>
+                </div>
+            </form>
+            
+            <div class="form-switch" id="formSwitch">
+                <span>Don't have an account? <a id="showRegister">Register here</a></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // In-memory database simulation
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        const messageDiv = document.getElementById('message');
+        const showRegisterLink = document.getElementById('showRegister');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const backToLoginLink = document.getElementById('backToLogin');
+        const formSwitch = document.getElementById('formSwitch');
+        const loginTab = document.getElementById('loginTab');
+        const registerTab = document.getElementById('registerTab');
+        
+        // Show message function
+        function showMessage(text, isSuccess) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${isSuccess ? 'success' : 'error'}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Switch between forms
+        function showForm(formName) {
+            loginForm.classList.add('hidden');
+            registerForm.classList.add('hidden');
+            forgotPasswordForm.classList.add('hidden');
+            formSwitch.classList.remove('hidden');
+            
+            if (formName === 'login') {
+                loginForm.classList.remove('hidden');
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+            } else if (formName === 'register') {
+                registerForm.classList.remove('hidden');
+                loginTab.classList.remove('active');
+                registerTab.classList.add('active');
+            } else if (formName === 'forgot') {
+                forgotPasswordForm.classList.remove('hidden');
+                formSwitch.classList.add('hidden');
+            }
+        }
+        
+        // Tab switching
+        loginTab.addEventListener('click', () => showForm('login'));
+        registerTab.addEventListener('click', () => showForm('register'));
+        
+        // Show register form
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showForm('register');
+        });
+        
+        // Show forgot password form
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showForm('forgot');
+        });
+        
+        // Back to login
+        backToLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showForm('login');
+        });
+        
+        // Login form submission
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const User = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Find user
+            const user = users.find(u => u.User === User && u.password === password);
+            
+            if (user) {
+                // Define the destination URL
+                const destinationURL = "index.html"; 
+
+                // Set a timeout to redirect after 3000 milliseconds (3 seconds)
+                setTimeout(function() {
+                    // This is the core line that changes the browser's URL
+                    window.location.href = destinationURL;
+                }, 500); 
+                //        showMessage(`Welcome back, ${user.name}!`, true);
+                // Reset form
+                //loginForm.reset();                                
+            } else {
+                showMessage('Invalid User or password!', false);
+            }
+        });
+        
+        // Register form submission
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('registerName').value;
+            const User = document.getElementById('registerUser').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            
+            // Validation
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match!', false);
+                return;
+            }
+            
+            // Check if user already exists
+            if (users.some(u => u.User === User)) {
+                showMessage('User with this User already exists!', false);
+                return;
+            }
+            
+            // Add new user
+            const newUser = {
+                id: Date.now(),
+                name: name,
+                User: User,
+                password: password
+            };
+            
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            showMessage('Account created successfully!', true);
+            registerForm.reset();
+            showForm('login');
+        });
+        
+        // Forgot password form submission
+        forgotPasswordForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const User = document.getElementById('forgotUser').value;
+            
+            // Check if user exists
+            const user = users.find(u => u.User === User);
+            
+            if (user) {
+                showMessage(`Password reset link sent to ${User}`, true);
+                forgotPasswordForm.reset();
+                setTimeout(() => showForm('login'), 2000);
+            } else {
+                showMessage('No account found with this User!', false);
+            }
+        });
+        
+        // Initialize with some sample users
+        if (users.length === 0) {
+            users = [
+                {
+                    id: 1,
+                    name: 'John Doe',
+                    User: 'john@example.com',
+                    password: 'password123'
+                },
+                {
+                    id: 2,
+                    name: 'Jane Smith',
+                    User: 'jane@example.com',
+                    password: 'mypassword'
+                }
+            ];
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+    </script>
+</body>
+</html>

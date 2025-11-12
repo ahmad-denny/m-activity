@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+
+        .date-container {
+            text-align: left;
+            background: transparent;
+            color: rgb(3, 3, 3);
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: lighter;
+        }
+        
+        .date-container label {
+            margin-right: 5px;
+        }
+        
+        #datePicker {
+            padding: 8px;
+            font-size: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        .container {
+            width: 98%;
+            max-width: 98%;
+            margin: 0;
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            overflow-x: hidden;
+        }
+
+
+        .header-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: purple;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .h1 {
+            margin:0cm;
+        }
+    
+        h3 {
+            text-align: right;
+            font-size: 13px;
+            font-style: italic;
+            font-weight: lighter;
+        }
+
+        .logo {
+            max-width: 100px;
+            height: auto;
+            align-content: center;
+        }
+
+        h2 {
+            color: purple;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #filterContainer {
+            display: block; /* Default tampil */
+            transition: all 0.3s ease;
+        }
+        
+        #toggleFilter {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        #toggleFilter:hover {
+            background: #0056b3;
+        }
+        
+
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            /*justify-content: space-between;*/
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f1f1f1;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"], select {
+            width: 100%; 
+            max-width: 300px; /* Sesuaikan max-width sesuai kebutuhan */
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box; /* Biar padding tidak mempengaruhi ukuran total */
+        }
+        
+        .reset-btn {
+            background:darkgreen;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background:darkred;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            max-width: 100%;
+            border-collapse: collapse;
+            margin-top: 1px;
+            text-align: center;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+        
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center; 
+        }
+
+        td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left; 
+            white-space: nowrap;
+        }
+
+        table td:nth-child(n+3){ 
+            text-align: center;
+        }
+      
+        th {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+        }
+
+        .highlight-yes {
+            color: #71f28f;
+            font-weight: bold;
+        }
+
+        .highlight-no {
+            color: #d65f6b;
+            font-weight: bold;
+        }
+
+        .highlight-red {
+            color: #d65f6b;
+            font-weight: bold;
+        }
+
+        .print-btn {
+            margin-top: 20px;
+            text-align: left;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                width: 20vw;
+                max-width: 140px;
+            }
+
+            .filter-container {
+                flex-direction: column;
+            }
+
+            input, select, .reset-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <!--<h1>
+            <img src="img/logo_mdirect.png" alt="Bank Muamalat Logo" class="logo">
+        </h1>-->
+
+        <h2><img src="img/M-Activity.png" alt="Bank Muamalat Logo" class="logo"> <br>M-Activity Performances</h2> 
+
+        <div class="filter-container">
+        <!--    <input type="text" id="searchBox" placeholder="Name or Marketing Code..." onkeyup="filterAndSearchTable()">
+        -->    
+            <!--    <select id="positionFilter" onchange="filterAndSearchTable()">
+                <option value="">All Position</option>
+                <option value="RM">RM</option>
+                <option value="RM C">RM Consumer</option>
+                <option value="RM P">RM Prioritas</option>
+                <option value="RM F">RM Funding & Hajj</option>                
+                <option value="CS">CS</option>                
+            </select>-->    
+            <select id="BranchFilter" onchange="filterAndSearchTable()">
+                <option value="">Main Branch</option>
+            </select>
+            <select id="OfficeFilter" onchange="filterAndSearchTable()">
+                <option value="">Office</option>
+            </select>
+            <!--
+            <select id="zeroMTDFilter" onchange="filterAndSearchTable()">
+                <option value="">Login MTD</option>
+                <option value="0">NOT Login MTD</option>            
+            </select>
+            <select id="zeroDTDFilter" onchange="filterAndSearchTable()">
+                <option value="">Login DTD</option>
+                <option value="N">NOT Login DTD</option>            
+            </select>
+            -->
+            <button class="reset-btn" onclick="resetFilter()">Reset</button>
+            <button class="logout-btn" onclick="window.location.href='newlogin.html'">Log Out => </button>          
+            <h3><p id="time-date"></p></h3>
+        </div>
+
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr id="tableHead"></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>       
+    <br>    
+    </div>
+    <button class="print-btn" onclick="printTable()">Print / Save PDF</button>
+
+    <script>
+        const successSection = document.getElementById('successSection');    
+        
+        function updateTimeDate() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
+            const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById("time-date").innerHTML = `${date} | ${time} WIB`; 
+            }
+        setInterval(updateTimeDate, 1000); // Update every second
+        updateTimeDate(); // Initial update
+
+        document.addEventListener("DOMContentLoaded", function() {
+            let today = new Date();
+            let formattedDate = today.toLocaleDateString("id-ID", { 
+                year: "numeric", 
+                month: "long", 
+                day: "numeric" 
+            });
+            document.getElementById("currentDate").textContent = formattedDate;
+        });
+        
+        let tableData = [];
+        fetch('Dataset.json')
+            .then(response => response.json())
+            .then(data => populateTable(data))
+            .catch(error => console.error('Error loading JSON:', error));
+
+            document.getElementById("toggleFilter").addEventListener("click", function() {
+                let filter = document.getElementById("filterContainer");
+                if (filter.style.display === "none") {
+                    filter.style.display = "block"; 
+                } else {
+                    filter.style.display = "none"; }
+            });
+
+        function populateTable(data) {
+            const tableHead = document.getElementById('tableHead');
+            const tableBody = document.getElementById('tableBody');
+            const OfficeFilter = document.getElementById('OfficeFilter');
+            const BranchFilter = document.getElementById('BranchFilter');
+            
+            //const zeroMTDFilter = document.getElementById('zeroMTDFilter');
+            //const zeroDTDFilter = document.getElementById('zeroDTDFilter');
+                        
+            tableHead.innerHTML = '';
+            tableBody.innerHTML = '';
+            tableData = [];
+            let Offices = new Set();
+            let periods = new Set();
+
+            if (data.length > 0) {
+                Object.keys(data[0]).forEach(header => {
+                    let th = document.createElement('th');
+                    th.textContent = header;
+                    tableHead.appendChild(th);
+                });
+
+                data.forEach(row => {
+                    let tr = document.createElement('tr');
+                    Object.values(row).forEach(cell => {
+                        let td = document.createElement('td');
+                        td.textContent = cell;
+                        tr.appendChild(td);
+                    });
+
+                    //let lastCell = tr.cells[tr.cells.length - 1];
+                    //if (lastCell.textContent === "Y") lastCell.classList.add("highlight-yes");
+                    //else if (lastCell.textContent === "N") lastCell.classList.add("highlight-no");
+
+                    //let loginMTDCell = tr.cells[5];  
+                    //if (loginMTDCell.textContent === "0") {
+                    //    loginMTDCell.classList.add("highlight-red");
+                    //}
+        
+                    //let loginDTDCell = tr.cells[6];  
+                    //if (loginDTDCell.textContent === "Y") loginDTDCell.classList.add("highlight-yes");
+                    //else if (loginDTDCell.textContent === "N") loginDTDCell.classList.add("highlight-no");
+                    
+
+                    tableBody.appendChild(tr);
+                    tableData.push(row);
+                    Offices.add(row['Office']);
+                    periods.add(row['Main Branch']);
+                });
+
+                updateFilterOptions1(OfficeFilter, Offices);
+                updateFilterOptions2(BranchFilter, periods);
+            }
+        }
+
+        function updateFilterOptions1(filterElement, values) {
+            filterElement.innerHTML = '<option value="">Office</option>';
+            values.forEach(value => {
+                let option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                filterElement.appendChild(option);
+            });
+        }
+        function updateFilterOptions2(filterElement, values) {
+            filterElement.innerHTML = '<option value="">Main Branch</option>';
+            values.forEach(value => {
+                let option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                filterElement.appendChild(option);
+            });
+        }
+
+        function filterAndSearchTable() {
+            //const searchValue = document.getElementById('searchBox').value.toLowerCase();
+            //const positionValue = document.getElementById('positionFilter').value.toLowerCase();
+            const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
+            const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
+            //const zeroMTDValue = document.getElementById('zeroMTDFilter').value.toLowerCase();
+            //const zeroDTDValue = document.getElementById('zeroDTDFilter').value.toLowerCase();
+
+            document.getElementById('tableBody').querySelectorAll('tr').forEach(row => {
+                let cells = row.getElementsByTagName('td');
+
+                //let nameMarketingMatch = searchValue === "" || 
+                //                         cells[1].textContent.toLowerCase().includes(searchValue) || 
+                //                         cells[2].textContent.toLowerCase().includes(searchValue);
+
+                //let positionMatch = positionValue === "" || cells[3].textContent.trim().toLowerCase().includes(positionValue);
+                let OfficeMatch = OfficeValue === "" || cells[0].textContent.toLowerCase() === OfficeValue;
+                let BranchMatch = BranchValue === "" || cells[1].textContent.toLowerCase() === BranchValue;             
+                //let zeroMTDMatch = zeroMTDValue === "" || cells[5].textContent.toLowerCase() === zeroMTDValue;             
+                //let zeroDTDMatch = zeroDTDValue === "" || cells[6].textContent.toLowerCase() === zeroDTDValue;             
+
+                if (OfficeMatch && BranchMatch) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+        function resetFilter() {
+            //document.getElementById('searchBox').value = "";
+            //document.getElementById('positionFilter').value = "";
+            document.getElementById('OfficeFilter').value = "";
+            document.getElementById('BranchFilter').value = "";
+            //document.getElementById('zeroMTDFilter').value = "";
+            //document.getElementById('zeroDTDFilter').value = "";            
+            filterAndSearchTable();
+        }
+
+        function printTable() {
+            let tableContent = document.getElementById("dataTable").outerHTML;
+            let originalContent = document.body.innerHTML;
+        
+            /*document.body.innerHTML = "<h1>M-Direct <i>as of " + document.getElementById('BranchFilter').value.toLowerCase() + 
+                "</i></h1>" + tableContent; */
+            document.body.innerHTML = tableContent; 
+            window.print(); 
+            document.body.innerHTML = originalContent; 
+        }
+        
+        function showMessage(text, isError = false) {
+            const el = document.createElement('div');
+            el.className = `message-box px-6 py-3 rounded-full shadow-lg text-white font-semibold mb-3 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+            el.textContent = text;
+            messageContainer.appendChild(el);
+
+            // Remove the message after animation finishes (3s)
+            setTimeout(() => {
+                el.remove();
+            }, 3000);
+        }
+
+        function logout() {
+            // 1. Show message
+            showMessage('Logging out...', false);
+
+            // 2. Hide Success Section with animation
+            successSection.style.opacity = '0';
+            successSection.style.transform = 'translateY(20px)';
+            successSection.classList.remove('opacity-100');
+
+            // Wait for the success section to hide before showing login
+            setTimeout(() => {
+                successSection.classList.add('hidden');
+
+                // 3. Reset and Show Login Section with animation
+                loginSection.classList.remove('hidden');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+
+                setTimeout(() => {
+                    loginSection.style.opacity = '1';
+                    loginSection.style.transform = 'translateY(0)';
+                }, 50);
+            }, 500);
+        }
+
+
+    </script>
+</body>
+</html>
