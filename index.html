@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M|Activity Performance Region Sumatera</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #chart-container {
+            width: 80%;
+            height: 250px; /* Tinggi chart diatur via CSS */
+            margin: 20px auto;
+        }
+    </style>    
     <style>
 
         .date-container {
@@ -67,7 +80,7 @@
         }
     
         h3 {
-            text-align: right;
+            text-align:center;
             font-size: 13px;
             font-style: italic;
             font-weight: lighter;
@@ -230,13 +243,207 @@
     </style>
 </head>
 <body>
+
+    <script>
+        const ChartDataLabels = window.ChartDataLabels;
+        let myChart = null; 
+
+        /**
+         * Menyortir data label dan nilai berdasarkan nilai numerik.
+         * @param {object} data - Objek {labels, values} dari parseCSV.
+         * @param {string} sortOrder - 'asc' (kecil ke besar) atau 'desc' (besar ke kecil).
+         * @returns {object} Objek data yang sudah disortir.
+         */
+        function sortDataByValue(data, sortOrder = 'desc') {
+            // 1. Pasangkan Label dan Nilai
+            const pairedData = data.labels.map((label, index) => ({
+                label: label,
+                value: data.values[index]
+            }));
+
+            // 2. Sortir Pasangan Data
+            pairedData.sort((a, b) => {
+                if (sortOrder === 'asc') {
+                    return a.value - b.value; // Ascending (Terkecil ke Terbesar)
+                } else {
+                    return b.value - a.value; // Descending (Terbesar ke Terkecil) - Umum untuk Bar Chart
+                }
+            });
+
+            // 3. Pisahkan kembali ke array labels dan values
+            const sortedLabels = pairedData.map(item => item.label);
+            const sortedValues = pairedData.map(item => item.value);
+
+            return { labels: sortedLabels, values: sortedValues };
+        }
+
+        // ----------------------------------------------------
+        // Fungsi Pembantu: Mendapatkan Warna RGB Acak
+        // ----------------------------------------------------
+        function getRandomColor(alpha = 1) {
+            const r = Math.floor(Math.random() * 255);
+            const g = Math.floor(Math.random() * 255);
+            const b = Math.floor(Math.random() * 255);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // ----------------------------------------------------
+        // Kunci Otomatisasi: Memuat data secara langsung
+        // ----------------------------------------------------
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('data.csv') 
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Gagal memuat file: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+//                    console.log("Data CSV berhasil dimuat.");
+                    const rawData = parseCSV(csvText);
+                    const sortedData = sortDataByValue(rawData, 'desc');
+                    drawChart(sortedData);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Gagal memuat atau memproses data. Pastikan Anda menjalankan ini di server lokal dan file data.csv ada.');
+                });
+        });
+
+        // ----------------------------------------------------
+        // Fungsi Parsing (Sama seperti sebelumnya)
+        // ----------------------------------------------------
+        function parseCSV(text) {
+            const rows = text.split('\n').filter(row => row.trim() !== '');
+            const labels = [];
+            const values = [];
+
+            for (let i = 1; i < rows.length; i++) {
+                const columns = rows[i].split(';'); 
+
+                if (columns.length >= 2) {
+                    const label = columns[0].trim();
+                    const value = parseFloat(columns[1].trim());
+
+                    if (label && !isNaN(value)) {
+                        labels.push(label);
+                        values.push(value);
+                    }
+                }
+            }
+            return { labels, values };
+        }
+
+        // ----------------------------------------------------
+        // Fungsi Menggambar/Memperbarui Chart (Dengan Warna Acak)
+        // ----------------------------------------------------
+        function drawChart(data) {
+            const ctx = document.getElementById('myBarChart').getContext('2d');
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            // --- Bagian yang Berubah ---
+            // Buat array warna acak untuk setiap bar
+            const backgroundColors = [];
+            const borderColors = [];
+            data.labels.forEach(() => {
+                backgroundColors.push(getRandomColor(0.5)); // Opacity 0.5 untuk background
+                borderColors.push(getRandomColor(1));     // Opacity 1 untuk border
+            });
+            // --- Akhir Bagian yang Berubah ---
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                plugins: [ChartDataLabels],
+                data: {
+                    labels: data.labels, 
+                    datasets: [{
+                        label: 'Daily Activity',
+                        data: data.values, 
+                        // Gunakan array warna acak yang sudah dibuat
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)',
+                            'rgba(255, 206, 86, 0.5)',
+                            'rgba(75, 192, 192, 0.5)',
+                            'rgba(153, 102, 255, 0.5)',
+                            'rgba(255, 159, 64, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],                        
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, 
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            },
+                            border: {
+                                display: false
+                            }
+                            },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            },
+                            border: {
+                                display: false
+                            },
+                            ticks: {
+                                display: false
+                            }
+                            }
+                    },
+                    plugins: {
+                        datalabels: {
+                        color: '#000', // Warna teks (putih agar terlihat di bar yang gelap)
+                        font: {
+                            weight: 'normal'
+                        },
+                        // Atur posisi di tengah bar
+                        anchor: 'end', 
+                        align: 'end', 
+                        // Opsional: Format nilai yang ditampilkan
+                        formatter: (value) => {
+                            // Di sini Anda bisa menambahkan format mata uang atau satuan
+                            return value.toLocaleString(); 
+                        }
+                        },
+                        title: {
+                            display: true,
+//                            text: 'Summary Daily Activity Branch Region Sumatera'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
     
+
     <div class="container">
         <!--<h1>
             <img src="img/logo_mdirect.png" alt="Bank Muamalat Logo" class="logo">
         </h1>-->
-
         <h2><img src="img/M-Activity.png" alt="Bank Muamalat Logo" class="logo"> <br>M-Activity Performances</h2> 
+        <div id="chart-container">
+            <canvas id="myBarChart"></canvas>
+        </div>
+
 
         <div class="filter-container">
         <!--    <input type="text" id="searchBox" placeholder="Name or Marketing Code..." onkeyup="filterAndSearchTable()">
@@ -288,7 +495,7 @@
         function updateTimeDate() {
             const now = new Date();
             const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
-            const date = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById("time-date").innerHTML = `${date} | ${time} WIB`; 
             }
         setInterval(updateTimeDate, 1000); // Update every second
@@ -481,6 +688,4 @@
 
     </script>
 </body>
-
 </html>
-
