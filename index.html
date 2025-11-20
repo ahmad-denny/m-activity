@@ -248,6 +248,25 @@
         const ChartDataLabels = window.ChartDataLabels;
         let myChart = null; 
 
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('data.csv') 
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Gagal memuat file: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+//                    console.log("Data CSV berhasil dimuat.");
+                    const rawData = parseCSV(csvText);
+                    const sortedData = sortDataByValue(rawData, 'desc');
+                    drawChart(sortedData);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Gagal memuat atau memproses data. Pastikan Anda menjalankan ini di server lokal dan file data.csv ada.');
+                });
+        });
         /**
          * Menyortir data label dan nilai berdasarkan nilai numerik.
          * @param {object} data - Objek {labels, values} dari parseCSV.
@@ -290,25 +309,7 @@
         // ----------------------------------------------------
         // Kunci Otomatisasi: Memuat data secara langsung
         // ----------------------------------------------------
-        document.addEventListener('DOMContentLoaded', function() {
-            fetch('data.csv') 
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Gagal memuat file: ${response.statusText}`);
-                    }
-                    return response.text();
-                })
-                .then(csvText => {
-//                    console.log("Data CSV berhasil dimuat.");
-                    const rawData = parseCSV(csvText);
-                    const sortedData = sortDataByValue(rawData, 'desc');
-                    drawChart(sortedData);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Gagal memuat atau memproses data. Pastikan Anda menjalankan ini di server lokal dan file data.csv ada.');
-                });
-        });
+        
 
         // ----------------------------------------------------
         // Fungsi Parsing (Sama seperti sebelumnya)
