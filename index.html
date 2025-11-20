@@ -246,10 +246,11 @@
 
     <script>
         const ChartDataLabels = window.ChartDataLabels;
+        const BASE_PATH = '/m-activity/';
         let myChart = null; 
 
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('./data.csv') 
+            fetch('${BASE_PATH}data.csv') 
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Gagal memuat file: ${response.statusText}`);
@@ -691,3 +692,4 @@
 </body>
 
 </html>
+
