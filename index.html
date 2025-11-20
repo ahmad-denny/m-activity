@@ -246,11 +246,13 @@
 
     <script>
         const ChartDataLabels = window.ChartDataLabels;
-        const BASE_PATH = 'https://github.com/ahmad-denny/m-activity/';
+        // GANTI 'nama-repo-anda' dengan nama repositori Anda. JANGAN GUNAKAN SLASH DIAKHIR.
+        const REPO_NAME = 'm-activity'; 
+        const BASE_PATH = './';        
         let myChart = null; 
 
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('${BASE_PATH}/data.csv') 
+            fetch('./data.csv') 
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Gagal memuat file: ${response.statusText}`);
@@ -692,6 +694,7 @@
 </body>
 
 </html>
+
 
 
 
