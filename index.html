@@ -413,10 +413,14 @@ function filterAndSearchTable() {
         drawChart({ labels: [], values: [] }); 
         return; 
     }
-    const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
-    const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
-    const COLUMN_TO_TOTAL = 'Total'; 
+    const OfficeFilterElement = document.getElementById('OfficeFilter');
+    const BranchFilterElement = document.getElementById('BranchFilter');
 
+    const OfficeValue = OfficeFilterElement.value.toLowerCase();
+    const BranchValue = BranchFilterElement.value.toLowerCase();
+    const COLUMN_TO_TOTAL = 'Total';
+
+    
     // --- Langkah 1: Penyaringan Dasar Data ---
     const filteredData = tableData.filter(row => {
     const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
@@ -556,4 +560,5 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
