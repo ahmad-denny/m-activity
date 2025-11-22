@@ -489,6 +489,26 @@ function filterAndSearchTable() {
         chartLabels = [totalLabel].concat(officeLabels);
         chartValues = chartLabels.map(label => chartTotals.get(label));
         
+        const chartDataArray = Array.from(chartTotals.entries()); 
+        const filteredChartData = chartDataArray.filter(([label, value]) => {
+            // Label Office harus > 0. Label TOTAL harus > 0.
+            return value > 0;
+        });
+        
+        // Susun Labels dan Values dari data yang sudah difilter
+        const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
+        const totalValue = chartTotals.get(totalLabel) || 0; // Ambil nilai TOTAL yang sudah dihitung
+        
+        // Filter Office Labels, dan pastikan label TOTAL hanya dimasukkan jika totalnya > 0
+        const officeLabels = filteredChartData.map(([label, value]) => label).filter(label => !label.startsWith('TOTAL'));
+        
+        if (totalValue > 0) {
+            chartLabels = [totalLabel].concat(officeLabels);
+        } else {
+            chartLabels = officeLabels; // Hanya Office yang memiliki nilai
+        }
+        chartValues = chartLabels.map(label => chartTotals.get(label) || 0);
+        
         // Kita lompat ke Langkah 3 karena chartLabels sudah terisi
         
     } else {
@@ -498,7 +518,13 @@ function filterAndSearchTable() {
         
         // Skenario 1/3 (Branch All, Office All) dan Skenario 4 (Office Spesifik)
         // Keduanya sekarang menggunakan groupingKey = 'Office'
-        
+        const chartDataArray = Array.from(chartTotals.entries()); 
+
+        // Filter data, menghilangkan nilai NOL (value <= 0)
+        const filteredChartData = chartDataArray.filter(([label, value]) => {
+            // Pastikan semua label (termasuk Office) hanya dimasukkan jika nilainya > 0.
+            return value > 0;
+        });
         filteredData.forEach(row => {
             const groupKey = row[groupingKey]; 
             const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0; 
@@ -576,6 +602,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
