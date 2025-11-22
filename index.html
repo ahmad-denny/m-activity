@@ -169,22 +169,22 @@ let myChart = null;
 let tableData = [];
 
 document.addEventListener('DOMContentLoaded', function() {
-    fetch('./data.csv')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Gagal memuat file: ${response.statusText}`);
-            }
-            return response.text();
-        })
-        .then(csvText => {
-            const rawData = parseCSV(csvText);
-            const sortedData = sortDataByValue(rawData, 'desc');
-            drawChart(sortedData);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Gagal memuat atau memproses data. Pastikan Anda menjalankan ini di server lokal dan file data.csv ada.');
-        });
+//    fetch('./data.csv')
+//        .then(response => {
+//            if (!response.ok) {
+//                throw new Error(`Gagal memuat file: ${response.statusText}`);
+//            }
+//            return response.text();
+//        })
+//        .then(csvText => {
+//            const rawData = parseCSV(csvText);
+//            const sortedData = sortDataByValue(rawData, 'desc');
+//            drawChart(sortedData);
+//        })
+//        .catch(error => {
+//            console.error('Error:', error);
+//            alert('Gagal memuat atau memproses data. Pastikan Anda menjalankan ini di server lokal dan file data.csv ada.');
+//        });
     
     // Memuat data tabel
     fetch('Dataset.json')
@@ -404,5 +404,6 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
