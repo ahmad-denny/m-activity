@@ -174,15 +174,21 @@ let allBranches = new Set(); // Tambahkan variabel global untuk menyimpan semua 
 document.addEventListener('DOMContentLoaded', function() {
     // Memuat data tabel
     fetch('Dataset.json')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Gagal memuat Dataset.json. Status: ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
             populateTable(data);
-            
-            // Panggil filterAndSearchTable untuk inisialisasi chart dengan data awal.
-            // Ini akan memicu logika kalkulasi chart (mode ringkasan).
-            filterAndSearchTable(); 
+            filterAndSearchTable(); // Pemanggilan inisialisasi chart
         })
-        .catch(error => console.error('Error loading JSON:', error));
+        .catch(error => {
+            console.error('Error loading JSON:', error); // Error ini yang Anda lihat di Console
+            // Tambahkan inisialisasi chart dengan data kosong jika gagal
+            drawChart({ labels: ['Gagal Memuat Data'], values: [0] });
+        });
         
     updateTimeDate(); 
     setInterval(updateTimeDate, 1000); 
@@ -340,13 +346,13 @@ function populateTable(data) {
 
     tableHead.innerHTML = '';
     tableBody.innerHTML = '';
-    tableData = data; // Simpan data mentah ke variabel global
+    tableData = Array.isArray(data) ? data : [];
 
     // Reset Sets global
     allOffices.clear();
     allBranches.clear();
 
-    if (data.length > 0) {
+    if (tableData.length > 0) {
         // ... (Kode untuk membuat header tabel) ...
         Object.keys(data[0]).forEach(header => {
             let th = document.createElement('th');
@@ -485,6 +491,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
