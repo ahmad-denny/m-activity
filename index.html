@@ -403,8 +403,8 @@ function updateFilterOptions(filterElement, values, defaultText) {
 // app.js (MODIFIKASI PENTING)
 
 function filterAndSearchTable() {
-    // ... (Kode pengecekan keamanan tableData di sini) ...
-    
+    // ... (Pengecekan Keamanan dan Deklarasi di awal) ...
+
     const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
     const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
     const tableBody = document.getElementById('tableBody');
@@ -412,6 +412,7 @@ function filterAndSearchTable() {
 
     // --- Langkah 1: Penyaringan Dasar Data ---
     const filteredData = tableData.filter(row => {
+        // ... (Logika Penyaringan) ...
         const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
         const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
         return BranchMatch && OfficeMatch;
@@ -422,16 +423,15 @@ function filterAndSearchTable() {
     const chartTotals = new Map();
     let chartLabels = [];
     let chartValues = [];
-    let chartGroupKey = ''; // Variabel baru untuk menentukan pengelompokan
+    let groupingKey = 'Main Branch'; // Default untuk Skenario 1
 
-    // Kasus 1: Main Branch (All) dipilih, Office (All) dipilih. (Poin 1)
-    if (BranchValue === "" && OfficeValue === "") {
-        chartGroupKey = 'Office';
+    // ----------------------------------------------------
+    // KONDISI PENENTUAN GROUPING KEY (PENTING)
+    // ----------------------------------------------------
     
-    // Kasus 3: Office (All) dipilih, Branch sudah dipilih tapi Office direset. 
-    // ATAU Office direset dari filter, kita paksa Grouping ke Office.
-    } else if (BranchValue !== "" && OfficeValue === "") {
-        // Poin 2: Satu Main Branch dipilih, Office (All) dipilih. Ini adalah mode DETAIL Branch.
+    // SKENARIO 2: Branch spesifik dipilih, Office (All) dipilih.
+    if (BranchValue !== "" && OfficeValue === "") {
+        // Mode Detail: Grouping berdasarkan Office di bawah Branch, termasuk total Branch.
         
         let totalBranchActivity = 0;
         
@@ -454,87 +454,35 @@ function filterAndSearchTable() {
         chartLabels = [totalLabel].concat(officeLabels);
         chartValues = chartLabels.map(label => chartTotals.get(label));
         
-        // Lewati logika pengelompokan default di bawah
+        // Setelah Poin 2 selesai, kita bisa langsung lompat ke Langkah 3.
         
-    } else if (OfficeValue === "" && BranchValue !== "main branch") {
-        // Poin 3: Semua Office ditampilkan di seluruh wilayah (Branch Filter tidak spesifik)
-        // Kita paksa grouping key menjadi Office
-        chartGroupKey = 'Office';
-
-    } else if (OfficeValue !== "") {
-         // Poin 4: Office spesifik dipilih (Contoh: Langsa)
-         chartGroupKey = 'Office';
+    } else if (OfficeValue !== "" && OfficeValue !== "office") { 
+        // SKENARIO 4: Office spesifik dipilih (misalnya "Langsa").
+        // Karena filter dasar sudah menyaring data hanya untuk Office ini,
+        // kita hanya perlu menampilkan totalnya.
+        groupingKey = 'Office';
+        
+    } else if (BranchValue === "" && document.getElementById('OfficeFilter').value !== "") {
+        // SKENARIO 3: Branch All (""), tapi Office memiliki nilai selain kosong.
+        // Ini adalah cara terbaik untuk mengidentifikasi niat melihat SEMUA OFFICE.
+        // Kita asumsikan jika OfficeFilter memiliki nilai (misalnya "Office" atau nilai default option lainnya yang bukan value=""),
+        // pengguna ingin melihat grouping berdasarkan Office.
+        groupingKey = 'Office';
+        
+    } else {
+        // SKENARIO 1: Branch All ("") dan Office All ("")
+        groupingKey = 'Main Branch';
     }
 
+    // ----------------------------------------------------
+    // LOGIKA PENGELOMPOKAN (Hanya berjalan jika BUKAN Skenario 2)
+    // ----------------------------------------------------
 
-    // --- Logika Pengelompokan Default (Hanya untuk Poin 1, 3, dan 4) ---
-    // Logika ini hanya berjalan jika chartLabels belum diisi oleh Poin 2
     if (chartLabels.length === 0) {
-        // Jika OfficeValue terisi (Poin 4), atau BranchValue kosong (Poin 1/3)
-        // chartGroupKey akan menentukan apakah kita grouping berdasarkan 'Main Branch' atau 'Office'.
-        
-        let targetGroupKey = BranchValue === "" ? 'Main Branch' : chartGroupKey;
-        if (OfficeValue === "" && BranchValue === "") {
-             targetGroupKey = 'Main Branch'; // Poin 1
-        } else if (OfficeValue === "") {
-            targetGroupKey = 'Main Branch'; // Poin 1
-        } else if (OfficeValue !== "") {
-            targetGroupKey = 'Office'; // Poin 4
-        }
-        
-        // Jika Office filter dipilih (Poin 3 atau Poin 4), kita kelompokkan berdasarkan Office
-        if (document.getElementById('OfficeFilter').value !== "") {
-             targetGroupKey = 'Office';
-        }
-        
-        // Jika Branch "All" dan Office "All", kita kelompokkan berdasarkan Main Branch (Poin 1)
-        if (BranchValue === "" && OfficeValue === "") {
-            targetGroupKey = 'Main Branch';
-        } 
-        
-        // FINAL CHECK: Jika filter Office memiliki nilai (All atau spesifik), kita kelompokkan berdasarkan Office.
-        // Jika filter Branch memiliki nilai, kita kelompokkan berdasarkan Branch, kecuali Office yang dipilih.
-
-        // Menetapkan targetGroupKey
-        if (OfficeValue !== "") {
-            // Skenario 3 dan 4 (Office memiliki nilai, All atau spesifik)
-            targetGroupKey = 'Office'; 
-        } else if (BranchValue === "") {
-            // Skenario 1 (Branch All, Office All)
-            targetGroupKey = 'Main Branch';
-        } else {
-            // Skenario 2 (Mode detail, seharusnya sudah ditangani di atas, tapi ini fallback)
-            targetGroupKey = 'Main Branch';
-        }
-        
-        // PENGELOMPOKAN KHUSUS SKENARIO 3 & 4
-        
-        let groupingKey = 'Main Branch'; // Default
-        
-        if (document.getElementById('OfficeFilter').value !== "") {
-            // Jika Office dipilih (walaupun All), grouping key adalah Office
-            groupingKey = 'Office';
-        }
-        
-        // Jika skenario 4 (Office spesifik), kita tampilkan office itu saja
-        if (OfficeValue !== "" && OfficeValue !== "office") { // OfficeValue adalah nama Office spesifik
-            groupingKey = 'Office';
-        }
-        
-        // Untuk Skenario 3 (Office ALL, Branch ALL)
-        if (BranchValue === "" && document.getElementById('OfficeFilter').value === "") {
-             groupingKey = 'Main Branch'; // Poin 1 (Kembali ke default)
-        }
-        
-        // Solusi Skenario 3 yang paling sederhana: Jika Branch kosong dan Office tidak kosong, groupingnya adalah Office.
-        if (BranchValue === "" && document.getElementById('OfficeFilter').value !== "" && OfficeValue === "") {
-            groupingKey = 'Office';
-        }
-
-        // --- Logika Pengelompokan Final untuk Poin 1, 3, dan 4 ---
         
         filteredData.forEach(row => {
-            const groupKey = row[groupingKey]; // Menggunakan groupingKey yang baru
+            // Gunakan groupingKey yang telah ditentukan di atas
+            const groupKey = row[groupingKey]; 
             const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0; 
             
             const currentTotal = chartTotals.get(groupKey) || 0;
@@ -547,13 +495,14 @@ function filterAndSearchTable() {
     
     // --- Langkah 3: Gambar Ulang Chart ---
 
-    if (chartLabels.length === 0) {
+    if (chartLabels.length === 0 && BranchValue === "" && OfficeValue === "") {
+         // Tampilkan chart kosong atau pesan jika tidak ada data sama sekali
          drawChart({ labels: [], values: [] });
     } else {
         const chartDataResult = { labels: chartLabels, values: chartValues };
         
-        // Hanya sortir jika BUKAN mode detail (Poin 2)
         let sortedChartData = chartDataResult;
+        // Tidak perlu sort jika mode detail (Poin 2), karena TOTAL harus di atas.
         if (!(BranchValue !== "" && OfficeValue === "")) {
             sortedChartData = sortDataByValue(chartDataResult, 'desc'); 
         }
@@ -597,6 +546,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
