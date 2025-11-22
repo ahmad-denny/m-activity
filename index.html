@@ -372,7 +372,7 @@ function filterAndSearchTable() {
         // Logika untuk menghitung data Chart baru
         // ASUMSI: Chart Anda berdasarkan kolom ke-2 (Office Activity) dan dikelompokkan berdasarkan kolom pertama (Main Branch)
         const label = String(row['Main Branch']); // Label X-axis (misal: Main Branch)
-        const value = parseFloat(row['Office Activity']) || 0; // Kolom yang diukur (sesuaikan nama kolom)
+        const value = parseFloat(row['Total']) || 0; // Kolom yang diukur (sesuaikan nama kolom)
 
         chartLabelsSet.add(label);
         chartValuesMap.set(label, (chartValuesMap.get(label) || 0) + value);
@@ -404,4 +404,5 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
