@@ -363,54 +363,66 @@ function updateFilterOptions(filterElement, values, defaultText) {
     });
 }
 
-// Di file app.js Anda
+// app.js (MODIFIKASI PENTING PADA BAGIAN CHART)
+
 function filterAndSearchTable() {
     const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
     const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
     const tableBody = document.getElementById('tableBody');
 
-    // 1. Saring data mentah (JSON)
+    // 1. Saring Data Mentah (Sama seperti sebelumnya)
     const filteredData = tableData.filter(row => {
+        // ... (Logika penyaringan BranchMatch dan OfficeMatch)
         const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
         const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
         return BranchMatch && OfficeMatch;
     });
 
-    // 2. Perbarui Tampilan Tabel (Sama seperti sebelumnya)
-    tableBody.innerHTML = ''; // Kosongkan tabel
+    // 2. Akumulasi Data untuk Chart (NEW LOGIC)
     
-    // Siapkan data untuk Chart dan hitung total (misalnya, jika nilai chart adalah total dari kolom tertentu)
-    const chartLabelsSet = new Set();
-    const chartValuesMap = new Map(); 
+    // Gunakan Map untuk menyimpan total: Key = 'Main Branch', Value = Total Activity
+    const branchTotals = new Map(); 
+    
+    // Tentukan kolom yang ingin Anda tampilkan totalnya di Chart.
+    // Asumsikan kita menggunakan kolom 'Office Activity' (sesuaikan jika nama kolom berbeda)
+    const COLUMN_TO_TOTAL = 'Office Activity'; 
 
     filteredData.forEach(row => {
-        // Logika untuk menampilkan baris di tabel (Opsional: lebih efisien daripada manipulasi style)
-        let tr = document.createElement('tr');
-        Object.values(row).forEach(cell => {
-            let td = document.createElement('td');
-            td.textContent = cell;
-            tr.appendChild(td);
-        });
-        tableBody.appendChild(tr);
-
-        // Logika untuk menghitung data Chart baru
-        // ASUMSI: Chart Anda berdasarkan kolom ke-2 (Office Activity) dan dikelompokkan berdasarkan kolom pertama (Main Branch)
-        const label = String(row['Office']); // Label X-axis (misal: Main Branch)
-        const value = parseFloat(row['Total']) || 0; // Kolom yang diukur (sesuaikan nama kolom)
-
-        chartLabelsSet.add(label);
-        chartValuesMap.set(label, (chartValuesMap.get(label) || 0) + value);
+        const branchName = row['Main Branch'];
+        // Pastikan nilainya adalah angka, jika tidak, anggap 0
+        const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0; 
+        
+        // Akumulasi total
+        const currentTotal = branchTotals.get(branchName) || 0;
+        branchTotals.set(branchName, currentTotal + activityValue);
+        
+        // ... (Logika perbaruan Tampilan Tabel, yang sudah Anda miliki) ...
+        // (Anda bisa memindahkan logika perbaruan tabel di sini, atau membiarkannya di loop terpisah)
     });
-
-    // 3. Siapkan data akhir untuk Chart
-    const finalLabels = Array.from(chartLabelsSet);
-    const finalValues = finalLabels.map(label => chartValuesMap.get(label));
+    
+    // 3. Konversi Map ke Format Data Chart
+    const finalLabels = Array.from(branchTotals.keys()); // Nama Main Branch
+    const finalValues = Array.from(branchTotals.values()); // Total Activity per Main Branch
     
     const chartDataResult = { labels: finalLabels, values: finalValues };
-    const sortedChartData = sortDataByValue(chartDataResult, 'desc'); // Panggil fungsi sorting yang sudah ada
+    const sortedChartData = sortDataByValue(chartDataResult, 'desc');
 
     // 4. Gambar Ulang Grafik
     drawChart(sortedChartData);
+
+    // 5. Perbarui Tampilan Tabel (Pindahkan logika DOM update tabel ke sini jika belum ada)
+    // Logika ini memastikan tabel juga diperbarui.
+    tableBody.innerHTML = '';
+    filteredData.forEach(row => {
+        let tr = document.createElement('tr');
+        // Asumsi urutan kolom Anda
+        Object.values(row).forEach(cell => {
+             let td = document.createElement('td');
+             td.textContent = cell;
+             tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+    });
 }
 
 // FUNGSI FILTERANDSEARCHTABLE (Tidak perlu diubah, karena sudah dipanggil oleh updateOfficeFilter)
@@ -434,6 +446,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
