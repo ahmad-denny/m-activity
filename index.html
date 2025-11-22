@@ -132,10 +132,10 @@
         </div>
 
         <div class="filter-container">
-            <select id="BranchFilter" onchange="updateOfficeFilter(this.value)">
+            <select id="BranchFilter">
                 <option value="">Main Branch</option>
                 </select>
-            <select id="OfficeFilter" onchange="filterAndSearchTable()">
+            <select id="OfficeFilter">
                 <option value="">Office</option>
                 </select>
             <button class="reset-btn" onclick="resetFilter()">Reset Filter</button>
@@ -182,7 +182,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             populateTable(data);
             // Panggil inisialisasi di sini HANYA jika berhasil dimuat
-            filterAndSearchTable(); 
+            filterAndSearchTable();
+            // 2. Tambahkan event listener sekarang, setelah data siap
+            document.getElementById('BranchFilter').addEventListener('change', function() {
+                updateOfficeFilter(this.value);
+            });
+            document.getElementById('OfficeFilter').addEventListener('change', function() {
+                filterAndSearchTable();
+            });
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
@@ -494,3 +501,4 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
