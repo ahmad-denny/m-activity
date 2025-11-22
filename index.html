@@ -172,29 +172,28 @@ let allOffices = new Set(); // Tambahkan variabel global untuk menyimpan semua O
 let allBranches = new Set(); // Tambahkan variabel global untuk menyimpan semua Main Branch unik
     
 document.addEventListener('DOMContentLoaded', function() {
-    // Memuat data tabel
     fetch('Dataset.json')
         .then(response => {
             if (!response.ok) {
-                throw new Error('Gagal memuat Dataset.json. Status: ' + response.status);
+                throw new Error('Gagal memuat Dataset.json.');
             }
             return response.json();
         })
         .then(data => {
             populateTable(data);
-            filterAndSearchTable(); // Pemanggilan inisialisasi chart
+            // Panggil inisialisasi di sini HANYA jika berhasil dimuat
+            filterAndSearchTable(); 
         })
         .catch(error => {
-            console.error('Error loading JSON:', error); // Error ini yang Anda lihat di Console
-            // Tambahkan inisialisasi chart dengan data kosong jika gagal
+            console.error('Error loading JSON:', error);
+            // Jika GAGAL, panggil drawChart secara langsung dengan data kosong/error.
+            // JANGAN panggil filterAndSearchTable.
             drawChart({ labels: ['Gagal Memuat Data'], values: [0] });
         });
         
     updateTimeDate(); 
     setInterval(updateTimeDate, 1000); 
     
-    // <<< HAPUS ATAU KOMENTARI BARIS INI >>>
-    // drawChart(data); 
 });
 
 function updateTimeDate() {
@@ -494,6 +493,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
