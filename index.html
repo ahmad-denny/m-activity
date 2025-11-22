@@ -405,7 +405,14 @@ function updateFilterOptions(filterElement, values, defaultText) {
     
 function filterAndSearchTable() {
     // ... (Pengecekan Keamanan dan Deklarasi di awal) ...
-
+// BARIS PENTING: Pengecekan data yang ketat.
+    // Jika tableData belum terisi, HENTIKAN eksekusi.
+    if (!Array.isArray(tableData) || tableData.length === 0) {
+        console.warn("Filtering dibatalkan: tableData tidak valid atau kosong.");
+        // Pastikan chart tetap dimuat dengan data kosong untuk menghindari error di HTML.
+        drawChart({ labels: [], values: [] }); 
+        return; 
+    }
     const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
     const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
     const COLUMN_TO_TOTAL = 'Total'; 
@@ -545,6 +552,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
