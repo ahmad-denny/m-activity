@@ -28,9 +28,9 @@
             overflow-x: hidden;
         }
         #chart-container {
-            position: relative; /* Penting untuk positioning pesan loading */
+            position: relative;
             width: 98%;
-            height: 300px;
+            height: 300px; /* HEIGHT DITENTUKAN DI SINI */
             margin: 20px auto;
         }
         
@@ -243,6 +243,16 @@ function parseCSV(text) {
 }
 
 function drawChart(data) {
+    console.log("Data yang diterima oleh drawChart:", data); // TAMBAH INI
+    
+    // PERIKSA: Apakah data.labels dan data.values ada dan tidak kosong?
+    if (!data || data.labels.length === 0) {
+        console.warn("Chart tidak digambar karena data kosong atau tidak valid.");
+        // Opsional: Tampilkan pesan di canvas
+        const ctx = document.getElementById('myBarChart').getContext('2d');
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        return; 
+    }    
     const ctx = document.getElementById('myBarChart').getContext('2d');
     const backgroundColors = data.labels.map(label => {
     if (label.startsWith('TOTAL -')) {
@@ -491,6 +501,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
