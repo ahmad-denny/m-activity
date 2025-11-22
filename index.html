@@ -404,11 +404,34 @@ function updateFilterOptions(filterElement, values, defaultText) {
 // app.js (MODIFIKASI PENTING)
 
 function filterAndSearchTable() {
-    // Ambil nilai filter, dll.
+    // <<< PENGECEKAN KEAMANAN BARU >>>
+    if (!tableData || tableData.length === 0) {
+        console.warn("Memfilter dibatalkan: Data tabel belum dimuat.");
+        
+        // Opsional: Pastikan chart kosong jika data belum dimuat
+        drawChart({ labels: [], values: [] }); 
+        
+        // HENTIKAN eksekusi fungsi di sini
+        return; 
+    }
+    // ^^^ END PENGECEKAN KEAMANAN ^^^
+
+    // Ambil nilai filter
     const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
     const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
     const tableBody = document.getElementById('tableBody');
-    const COLUMN_TO_TOTAL = 'Total'; // Pastikan nama kolom ini sudah benar
+
+    // Kolom yang nilainya akan dijumlahkan 
+    // (Ganti 'Total' jika nama kolom Anda berbeda, ini masih jadi potensi masalah chart kosong)
+    const COLUMN_TO_TOTAL = 'Total'; 
+    
+    // Saring data mentah (Baris ini tidak akan menyebabkan error lagi)
+    const filteredData = tableData.filter(row => {
+        // ... (Logika filter) ...
+        const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
+        const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
+        return BranchMatch && OfficeMatch;
+    });
     
     const filteredData = tableData.filter(/* ... filtering logic ... */);
 
@@ -501,4 +524,5 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
