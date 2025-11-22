@@ -481,7 +481,8 @@ function resetFilter() {
     document.getElementById('BranchFilter').value = "";
     
     // Panggil updateOfficeFilter dengan nilai kosong untuk mengembalikan semua opsi Office
-    updateOfficeFilter(""); 
+    updateOfficeFilter("");
+    filterAndSearchTable(); 
 }
 
 function printTable() {
@@ -493,29 +494,3 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
