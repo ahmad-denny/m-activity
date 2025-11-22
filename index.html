@@ -406,37 +406,45 @@ function updateFilterOptions(filterElement, values, defaultText) {
 function filterAndSearchTable() {
     // ... (Pengecekan Keamanan dan Deklarasi di awal) ...
 
-    const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
-    const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
-    const tableBody = document.getElementById('tableBody');
+    const OfficeFilterElement = document.getElementById('OfficeFilter');
+    const BranchFilterElement = document.getElementById('BranchFilter');
+
+    const OfficeValue = OfficeFilterElement.value.toLowerCase();
+    const BranchValue = BranchFilterElement.value.toLowerCase();
     const COLUMN_TO_TOTAL = 'Total'; 
 
     // --- Langkah 1: Penyaringan Dasar Data ---
-    const filteredData = tableData.filter(row => {
-        // ... (Logika Penyaringan) ...
-        const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
-        const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
-        return BranchMatch && OfficeMatch;
-    });
+    const filteredData = tableData.filter(/* ... filtering logic ... */);
 
     // --- Langkah 2: Logika Pengelompokan Chart ---
     
     const chartTotals = new Map();
     let chartLabels = [];
     let chartValues = [];
-    let groupingKey = 'Main Branch'; // Default untuk Skenario 1
+    let groupingKey = 'Main Branch'; // Default (Skenario 1)
 
-    // ----------------------------------------------------
-    // KONDISI PENENTUAN GROUPING KEY (PENTING)
-    // ----------------------------------------------------
+    // ------------------------------------------------------------------
+    // KONDISI PENENTUAN GROUPING KEY UNTUK SEMUA SKENARIO (Kecuali Skenario 2)
+    // ------------------------------------------------------------------
     
+    // Periksa apakah pengguna memilih Office spesifik (Skenario 4) 
+    // ATAU pengguna memilih opsi "Office" (yang biasanya bernilai "") ketika Branch kosong (Skenario 3)
+    if (OfficeValue !== "") {
+        // Skenario 4: Office spesifik dipilih. Grouping harus Office.
+        groupingKey = 'Office';
+    } 
+    // Jika Branch dipilih spesifik (BranchValue !== "") dan OfficeValue kosong, 
+    // ini adalah Skenario 2 (mode detail), yang kita tangani di blok berikutnya.
+    
+    // ------------------------------------------------------------------
     // SKENARIO 2: Branch spesifik dipilih, Office (All) dipilih.
+    // Logika ini harus mendefinisikan chartLabels dan chartValues secara langsung.
+    // ------------------------------------------------------------------
     if (BranchValue !== "" && OfficeValue === "") {
         // Mode Detail: Grouping berdasarkan Office di bawah Branch, termasuk total Branch.
         
         let totalBranchActivity = 0;
         
-        // Hitung total per Office
         filteredData.forEach(row => {
             const officeName = row['Office'];
             const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
@@ -448,41 +456,26 @@ function filterAndSearchTable() {
         });
 
         // Susun Labels Poin 2 (TOTAL Branch + Offices)
-        const totalLabel = `Total ${BranchValue.toUpperCase()}`;
+        const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
         chartTotals.set(totalLabel, totalBranchActivity);
         
         const officeLabels = Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL'));
         chartLabels = [totalLabel].concat(officeLabels);
         chartValues = chartLabels.map(label => chartTotals.get(label));
         
-        // Setelah Poin 2 selesai, kita bisa langsung lompat ke Langkah 3.
-        
-    } else if (OfficeValue !== "" && OfficeValue !== "office") { 
-        // SKENARIO 4: Office spesifik dipilih (misalnya "Langsa").
-        // Karena filter dasar sudah menyaring data hanya untuk Office ini,
-        // kita hanya perlu menampilkan totalnya.
-        groupingKey = 'Office';
-        
-    } else if (BranchValue === "" && document.getElementById('OfficeFilter').value !== "") {
-        // SKENARIO 3: Branch All (""), tapi Office memiliki nilai selain kosong.
-        // Ini adalah cara terbaik untuk mengidentifikasi niat melihat SEMUA OFFICE.
-        // Kita asumsikan jika OfficeFilter memiliki nilai (misalnya "Office" atau nilai default option lainnya yang bukan value=""),
-        // pengguna ingin melihat grouping berdasarkan Office.
-        groupingKey = 'Office';
+        // Kita lompat ke Langkah 3 karena chartLabels sudah terisi
         
     } else {
-        // SKENARIO 1: Branch All ("") dan Office All ("")
-        groupingKey = 'Main Branch';
-    }
-
-    // ----------------------------------------------------
-    // LOGIKA PENGELOMPOKAN (Hanya berjalan jika BUKAN Skenario 2)
-    // ----------------------------------------------------
-
-    if (chartLabels.length === 0) {
+        // ----------------------------------------------------
+        // LOGIKA PENGELOMPOKAN DEFAULT (Skenario 1, 3, dan 4)
+        // ----------------------------------------------------
+        
+        // Hanya dijalankan jika BUKAN Skenario 2
+        
+        // Skenario 3 & 4 (groupingKey = 'Office') atau Skenario 1 (groupingKey = 'Main Branch')
         
         filteredData.forEach(row => {
-            // Gunakan groupingKey yang telah ditentukan di atas
+            // Gunakan groupingKey yang telah ditentukan ('Main Branch' atau 'Office')
             const groupKey = row[groupingKey]; 
             const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0; 
             
@@ -492,6 +485,10 @@ function filterAndSearchTable() {
         
         chartLabels = Array.from(chartTotals.keys()); 
         chartValues = Array.from(chartTotals.values());
+        
+        console.log("Office Value:", OfficeValue);
+        console.log("Branch Value:", BranchValue);
+        console.log("Grouping Key yang Dipilih:", groupingKey);
     }
     
     // --- Langkah 3: Gambar Ulang Chart ---
@@ -547,6 +544,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
