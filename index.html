@@ -402,6 +402,7 @@ function updateFilterOptions(filterElement, values, defaultText) {
 
 // app.js (MODIFIKASI PENTING)
 
+    
 function filterAndSearchTable() {
     // ... (Pengecekan Keamanan dan Deklarasi di awal) ...
 
@@ -447,7 +448,7 @@ function filterAndSearchTable() {
         });
 
         // Susun Labels Poin 2 (TOTAL Branch + Offices)
-        const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
+        const totalLabel = `Total ${BranchValue.toUpperCase()}`;
         chartTotals.set(totalLabel, totalBranchActivity);
         
         const officeLabels = Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL'));
@@ -546,6 +547,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
