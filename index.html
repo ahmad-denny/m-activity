@@ -316,21 +316,20 @@ function drawChart(data) {
     });
 }
 
-// FUNGSI BARU: Dipanggil saat Main Branch berubah
 function updateOfficeFilter(selectedBranch) {
     const OfficeFilter = document.getElementById('OfficeFilter');
     
     // 1. Reset Office Filter
     OfficeFilter.innerHTML = '<option value="">Office</option>'; 
     
-    if (selectedBranch === "Main Branch") {
-        // Jika Main Branch direset (dipilih "All"), tampilkan semua Office
+    // Jika filter Branch direset (dipilih "Main Branch" yang nilainya ""), 
+    // Office akan diisi semua opsi dan chart akan menampilkan semua Main Branch (Poin 1).
+    if (selectedBranch === "") {
         updateFilterOptions(OfficeFilter, allOffices, 'Office');
     } else {
-        // 2. Saring data untuk mendapatkan Office yang relevan
+        // 2. Saring data untuk mendapatkan Office yang relevan (Poin 2)
         let relevantOffices = new Set();
         tableData.forEach(row => {
-            // Konversi ke string agar dapat dibandingkan dengan string kosong/nilai filter
             if (String(row['Main Branch']).toLowerCase() === selectedBranch.toLowerCase()) {
                 relevantOffices.add(row['Office']);
             }
@@ -404,90 +403,108 @@ function updateFilterOptions(filterElement, values, defaultText) {
 // app.js (MODIFIKASI PENTING)
 
 function filterAndSearchTable() {
-    // <<< PENGECEKAN KEAMANAN BARU >>>
-    if (!tableData || tableData.length === 0) {
-        console.warn("Memfilter dibatalkan: Data tabel belum dimuat.");
-        
-        // Opsional: Pastikan chart kosong jika data belum dimuat
-        drawChart({ labels: [], values: [] }); 
-        
-        // HENTIKAN eksekusi fungsi di sini
-        return; 
-    }
-    // ^^^ END PENGECEKAN KEAMANAN ^^^
-
-    // Ambil nilai filter
+    // Ambil nilai filter (pastikan selalu lowercase untuk perbandingan)
     const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
     const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
     const tableBody = document.getElementById('tableBody');
-
-    // Kolom yang nilainya akan dijumlahkan 
-    // (Ganti 'Total' jika nama kolom Anda berbeda, ini masih jadi potensi masalah chart kosong)
-    const COLUMN_TO_TOTAL = 'Total'; 
+    const COLUMN_TO_TOTAL = 'Total'; // <<< SESUAIKAN JIKA NAMA KOLOM BERBEDA >>>
     
-    // Saring data mentah (Baris ini tidak akan menyebabkan error lagi)
+    // --- Langkah 1: Penyaringan Dasar Data ---
+    // Saring data mentah berdasarkan filter yang dipilih
     const filteredData = tableData.filter(row => {
-        // ... (Logika filter) ...
+        // Jika BranchValue kosong ("Main Branch" atau "Office"), anggap cocok.
         const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
         const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
+        
+        // Catatan: Jika OfficeValue terisi, filter harus cocok dengan Main Branch yang dipilih, 
+        // tapi logika ini ditangani oleh updateOfficeFilter sebelum pemanggilan ini.
         return BranchMatch && OfficeMatch;
     });
+
+    // --- Langkah 2: Logika Pengelompokan Chart ---
     
     const chartTotals = new Map();
-    let chartGroupKey = 'Main Branch';
-    
-    // <<< DEKLARASIKAN VARIABEL DI AWAL FUNGSI >>>
-    let finalLabels; 
-    let finalValues;
+    let chartLabels = [];
+    let chartValues = [];
 
-    if (BranchValue !== "" && OfficeValue === "") {
-        // Mode Detail
-        let totalBranchActivity = 0;
+    // Kasus 1: Main Branch (All) atau Office (All) dipilih, atau keduanya kosong.
+    if (BranchValue === "" && OfficeValue === "") {
+        // Menerapkan Logika Poin 1 & 3: Tampilkan semua Main Branch. (Default)
         
         filteredData.forEach(row => {
-            const officeName = row['Office'];
-            const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
-            
-            const currentOfficeTotal = chartTotals.get(officeName) || 0;
-            chartTotals.set(officeName, currentOfficeTotal + activityValue);
-            totalBranchActivity += activityValue;
-        });
-
-        chartTotals.set(`TOTAL - ${BranchValue.toUpperCase()}`, totalBranchActivity);
-        
-        const tempLabels = [`TOTAL - ${BranchValue.toUpperCase()}`].concat(Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL -')));
-        
-        // <<< Beri Nilai pada variabel yang sudah dideklarasikan >>>
-        finalLabels = tempLabels;
-        finalValues = finalLabels.map(label => chartTotals.get(label));
-    
-    } else {
-        // Mode Ringkasan
-        
-        filteredData.forEach(row => {
-            const groupKey = row[chartGroupKey];
+            const groupKey = row['Main Branch'];
             const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0; 
             
             const currentTotal = chartTotals.get(groupKey) || 0;
             chartTotals.set(groupKey, currentTotal + activityValue);
         });
         
-        // <<< Beri Nilai pada variabel yang sudah dideklarasikan >>>
-        finalLabels = Array.from(chartTotals.keys()); 
-        finalValues = Array.from(chartTotals.values());
+        chartLabels = Array.from(chartTotals.keys()); 
+        chartValues = Array.from(chartTotals.values());
+
+    } else if (BranchValue !== "" && OfficeValue === "") {
+        // Menerapkan Logika Poin 2: Satu Main Branch dipilih, Office kosong.
+        
+        let totalBranchActivity = 0;
+        
+        // Hitung total per Office
+        filteredData.forEach(row => {
+            const officeName = row['Office'];
+            const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
+            
+            // Akumulasi total per Office
+            const currentOfficeTotal = chartTotals.get(officeName) || 0;
+            chartTotals.set(officeName, currentOfficeTotal + activityValue);
+
+            // Akumulasi Total Branch
+            totalBranchActivity += activityValue;
+        });
+
+        // Tambahkan Total Branch sebagai entri pertama
+        const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
+        chartTotals.set(totalLabel, totalBranchActivity);
+        
+        // Susun Labels: TOTAL Branch diikuti oleh semua Office
+        const officeLabels = Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL'));
+        chartLabels = [totalLabel].concat(officeLabels);
+        
+        // Dapatkan nilai sesuai urutan label
+        chartValues = chartLabels.map(label => chartTotals.get(label));
+
+    } else if (OfficeValue !== "") {
+        // Menerapkan Logika Poin 4: Office spesifik dipilih. 
+        // Note: Filter dasar di langkah 1 sudah menyaring data hanya untuk Office ini.
+        
+        // Logika Poin 4: Hanya menampilkan total dari Office yang dipilih.
+        let totalOfficeActivity = 0;
+        filteredData.forEach(row => {
+            totalOfficeActivity += parseFloat(row[COLUMN_TO_TOTAL]) || 0;
+        });
+        
+        // Chart hanya punya satu bar/titik
+        chartLabels = [`TOTAL ${OfficeValue.toUpperCase()}`];
+        chartValues = [totalOfficeActivity];
+    }
+    
+    // --- Langkah 3: Gambar Ulang Chart ---
+
+    if (chartLabels.length === 0) {
+         // Jika hasil filter kosong (misal kombinasi filter yang mustahil)
+         drawChart({ labels: [], values: [] });
+    } else {
+        const chartDataResult = { labels: chartLabels, values: chartValues };
+        
+        // Hanya sortir jika BUKAN mode detail (Poin 2)
+        let sortedChartData = chartDataResult;
+        if (!(BranchValue !== "" && OfficeValue === "")) {
+            sortedChartData = sortDataByValue(chartDataResult, 'desc'); 
+        }
+
+        drawChart(sortedChartData); 
     }
 
-    // 4. Proses dan Gambar Ulang Grafik
-    // Variabel sekarang dikenal di sini!
-    const chartDataResult = { labels: finalLabels, values: finalValues };
-    
-    console.log("Data yang Dihitung Chart:", chartDataResult);
-    
-    const sortedChartData = sortDataByValue(chartDataResult, 'desc');
-    
-    drawChart(sortedChartData);
-
-    // 5. Perbarui Tampilan Tabel (Sama seperti sebelumnya)
+    // --- Langkah 4: Perbarui Tampilan Tabel ---
+    // Logika ini memastikan tabel juga diperbarui.
     tableBody.innerHTML = '';
     filteredData.forEach(row => {
         let tr = document.createElement('tr');
@@ -522,6 +539,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
