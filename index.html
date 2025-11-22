@@ -34,20 +34,6 @@
             margin: 20px auto;
         }
         
-        #loadingMessage {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.9); /* Latar belakang putih transparan */
-            display: flex; /* Untuk memposisikan teks di tengah */
-            justify-content: center;
-            align-items: center;
-            font-size: 16px;
-            color: #555;
-            z-index: 10; /* Pastikan pesan loading di atas canvas */
-        }
         h2 {
             color: white;
             background-color: purple;
@@ -187,11 +173,6 @@ let allOffices = new Set(); // Tambahkan variabel global untuk menyimpan semua O
 let allBranches = new Set(); // Tambahkan variabel global untuk menyimpan semua Main Branch unik
     
 document.addEventListener('DOMContentLoaded', function() {
-    const loadingMessage = document.getElementById('loadingMessage');
-    // Tampilkan loading sebelum fetch dimulai
-    if (loadingMessage) {
-        loadingMessage.style.display = 'flex'; 
-    }
     // Memuat data tabel
     fetch('Dataset.json')
         .then(response => response.json())
@@ -453,6 +434,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
