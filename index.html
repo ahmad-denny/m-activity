@@ -176,12 +176,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Memuat data tabel
     fetch('Dataset.json')
         .then(response => response.json())
-        .then(data => populateTable(data))
+        .then(data => {
+            populateTable(data);
+            
+            // Panggil filterAndSearchTable untuk inisialisasi chart dengan data awal.
+            // Ini akan memicu logika kalkulasi chart (mode ringkasan).
+            filterAndSearchTable(); 
+        })
         .catch(error => console.error('Error loading JSON:', error));
         
-    updateTimeDate(); // Initial time update
-    setInterval(updateTimeDate, 1000); // Update every second
-    drawChart(data);
+    updateTimeDate(); 
+    setInterval(updateTimeDate, 1000); 
+    
+    // <<< HAPUS ATAU KOMENTARI BARIS INI >>>
+    // drawChart(data); 
 });
 
 function updateTimeDate() {
@@ -483,6 +491,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
