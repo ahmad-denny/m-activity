@@ -260,7 +260,7 @@ function drawChart(data) {
     ];
 
     myChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         plugins: [ChartDataLabels],
         data: {
             labels: data.labels,
@@ -404,6 +404,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
