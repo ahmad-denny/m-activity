@@ -338,29 +338,60 @@ function updateFilterOptions(filterElement, values, defaultText) {
     });
 }
 
+// Di file app.js Anda
 function filterAndSearchTable() {
     const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
     const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
+    const tableBody = document.getElementById('tableBody');
 
-    document.getElementById('tableBody').querySelectorAll('tr').forEach(row => {
-        let cells = row.getElementsByTagName('td');
-        
-        // Asumsi kolom Branch ada di index 0 dan Office di index 1 (sesuai cara pengumpulan Set)
-        let BranchMatch = BranchValue === "" || cells[0].textContent.toLowerCase() === BranchValue;
-        let OfficeMatch = OfficeValue === "" || cells[1].textContent.toLowerCase() === OfficeValue;
-
-        if (OfficeMatch && BranchMatch) {
-            row.style.display = "";
-        } else {
-            row.style.display = "none";
-        }
+    // 1. Saring data mentah (JSON)
+    const filteredData = tableData.filter(row => {
+        const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
+        const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
+        return BranchMatch && OfficeMatch;
     });
+
+    // 2. Perbarui Tampilan Tabel (Sama seperti sebelumnya)
+    tableBody.innerHTML = ''; // Kosongkan tabel
+    
+    // Siapkan data untuk Chart dan hitung total (misalnya, jika nilai chart adalah total dari kolom tertentu)
+    const chartLabelsSet = new Set();
+    const chartValuesMap = new Map(); 
+
+    filteredData.forEach(row => {
+        // Logika untuk menampilkan baris di tabel (Opsional: lebih efisien daripada manipulasi style)
+        let tr = document.createElement('tr');
+        Object.values(row).forEach(cell => {
+            let td = document.createElement('td');
+            td.textContent = cell;
+            tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+
+        // Logika untuk menghitung data Chart baru
+        // ASUMSI: Chart Anda berdasarkan kolom ke-2 (Office Activity) dan dikelompokkan berdasarkan kolom pertama (Main Branch)
+        const label = String(row['Main Branch']); // Label X-axis (misal: Main Branch)
+        const value = parseFloat(row['Office Activity']) || 0; // Kolom yang diukur (sesuaikan nama kolom)
+
+        chartLabelsSet.add(label);
+        chartValuesMap.set(label, (chartValuesMap.get(label) || 0) + value);
+    });
+
+    // 3. Siapkan data akhir untuk Chart
+    const finalLabels = Array.from(chartLabelsSet);
+    const finalValues = finalLabels.map(label => chartValuesMap.get(label));
+    
+    const chartDataResult = { labels: finalLabels, values: finalValues };
+    const sortedChartData = sortDataByValue(chartDataResult, 'desc'); // Panggil fungsi sorting yang sudah ada
+
+    // 4. Gambar Ulang Grafik
+    drawChart(sortedChartData);
 }
 
 function resetFilter() {
     document.getElementById('OfficeFilter').value = "";
     document.getElementById('BranchFilter').value = "";
-    filterAndSearchTable();
+    filterAndSearchTable(); // Memanggil filterAndSearchTable untuk merender ulang dengan filter kosong
 }
 
 function printTable() {
@@ -371,3 +402,4 @@ function printTable() {
     window.print();
     document.body.innerHTML = originalContent;
 }
+
