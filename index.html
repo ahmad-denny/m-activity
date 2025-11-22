@@ -507,8 +507,10 @@ function filterAndSearchTable() {
             chartTotals.set(groupKey, currentTotal + activityValue);
         });
         
-        chartLabels = Array.from(chartTotals.keys()); 
-        chartValues = Array.from(chartTotals.values());
+        chartLabels = filteredChartData.map(([label, value]) => label);
+        chartValues = filteredChartData.map(([label, value]) => value);
+//        chartLabels = Array.from(chartTotals.keys()); 
+//        chartValues = Array.from(chartTotals.values());
         
         // KHUSUS SKENARIO 1 (Jika pengguna benar-benar ingin melihat Main Branch)
         if (BranchValue === "" && OfficeValue === "" && BranchFilterElement.value === "") {
@@ -534,8 +536,6 @@ function filterAndSearchTable() {
             sortedChartData = sortDataByValue(chartDataResult, 'desc'); 
         }
 
-        chartLabels = filteredChartData.map(([label, value]) => label);
-        chartValues = filteredChartData.map(([label, value]) => value);
         
         drawChart(sortedChartData); 
     }
@@ -576,6 +576,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
