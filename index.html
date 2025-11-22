@@ -433,8 +433,6 @@ function filterAndSearchTable() {
         return BranchMatch && OfficeMatch;
     });
     
-    const filteredData = tableData.filter(/* ... filtering logic ... */);
-
     const chartTotals = new Map();
     let chartGroupKey = 'Main Branch';
     
@@ -524,5 +522,6 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
