@@ -392,57 +392,44 @@ function updateFilterOptions(filterElement, values, defaultText) {
 // app.js (MODIFIKASI PENTING)
 
 function filterAndSearchTable() {
-    // Ambil nilai filter
+    // Ambil nilai filter, dll.
     const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
     const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
     const tableBody = document.getElementById('tableBody');
-
-    // Kolom yang nilainya akan dijumlahkan (Pastikan nama kolom ini benar)
-    const COLUMN_TO_TOTAL = 'Total'; 
+    const COLUMN_TO_TOTAL = 'Total'; // Pastikan nama kolom ini sudah benar
     
-    // Saring data mentah (Hanya data yang cocok dengan filter yang dipilih)
-    const filteredData = tableData.filter(row => {
-        const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
-        const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
-        return BranchMatch && OfficeMatch;
-    });
+    const filteredData = tableData.filter(/* ... filtering logic ... */);
 
-    // TENTUKAN LOGIKA PENGELOMPOKAN UNTUK CHART
     const chartTotals = new Map();
-    let chartGroupKey = 'Main Branch'; // Default group by Main Branch
+    let chartGroupKey = 'Main Branch';
+    
+    // <<< DEKLARASIKAN VARIABEL DI AWAL FUNGSI >>>
+    let finalLabels; 
+    let finalValues;
 
     if (BranchValue !== "" && OfficeValue === "") {
-        // Mode Detail: Main Branch dipilih, Office kosong. Kita tampilkan Main Branch & Officenya.
-        
-        // 1. Hitung Total Main Branch secara keseluruhan
+        // Mode Detail
         let totalBranchActivity = 0;
         
-        // 2. Hitung total per Office
         filteredData.forEach(row => {
             const officeName = row['Office'];
             const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
             
-            // Akumulasi total Office
             const currentOfficeTotal = chartTotals.get(officeName) || 0;
             chartTotals.set(officeName, currentOfficeTotal + activityValue);
-
-            // Akumulasi Total Branch (untuk bar/titik pertama)
             totalBranchActivity += activityValue;
         });
 
-        // 3. Tambahkan Total Branch sebagai entri pertama di Map
-        // Gunakan nama unik agar mudah diidentifikasi, misal: "TOTAL - [Nama Branch]"
         chartTotals.set(`TOTAL - ${BranchValue.toUpperCase()}`, totalBranchActivity);
         
-        // Atur agar Total Branch muncul pertama
         const tempLabels = [`TOTAL - ${BranchValue.toUpperCase()}`].concat(Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL -')));
         
-        // Dapatkan nilai sesuai urutan label
-        const finalLabels = tempLabels;
-        const finalValues = finalLabels.map(label => chartTotals.get(label));
+        // <<< Beri Nilai pada variabel yang sudah dideklarasikan >>>
+        finalLabels = tempLabels;
+        finalValues = finalLabels.map(label => chartTotals.get(label));
     
     } else {
-        // Mode Ringkasan: Default (atau Main Branch & Office terisi), Group by Main Branch.
+        // Mode Ringkasan
         
         filteredData.forEach(row => {
             const groupKey = row[chartGroupKey];
@@ -452,19 +439,17 @@ function filterAndSearchTable() {
             chartTotals.set(groupKey, currentTotal + activityValue);
         });
         
-        const finalLabels = Array.from(chartTotals.keys()); 
-        const finalValues = Array.from(chartTotals.values());
+        // <<< Beri Nilai pada variabel yang sudah dideklarasikan >>>
+        finalLabels = Array.from(chartTotals.keys()); 
+        finalValues = Array.from(chartTotals.values());
     }
 
     // 4. Proses dan Gambar Ulang Grafik
+    // Variabel sekarang dikenal di sini!
     const chartDataResult = { labels: finalLabels, values: finalValues };
-    const sortedChartData = sortDataByValue(chartDataResult, 'desc'); // Sortir berdasarkan nilai (kecuali pada mode detail, kita abaikan sorting di sini)
-
-    // Jika kita dalam mode detail, kita ingin urutan Branch Total dulu, lalu Office.
-    // Jika fungsi sortDataByValue Anda tidak mendukung pengecualian, biarkan sorting berjalan, 
-    // atau modifikasi drawChart untuk tidak mensortir jika BranchValue terisi.
+    const sortedChartData = sortDataByValue(chartDataResult, 'desc');
     
-    drawChart(sortedChartData); 
+    drawChart(sortedChartData);
 
     // 5. Perbarui Tampilan Tabel (Sama seperti sebelumnya)
     tableBody.innerHTML = '';
@@ -500,6 +485,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
