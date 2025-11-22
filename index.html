@@ -262,7 +262,6 @@ function drawChart(data) {
             datasets: [{
                 label: 'Office Activity',
                 data: data.values,
-                backgroundColor: backgroundColors,
                 backgroundColor: staticColors,
                 borderColor: staticColors.map(c => c.replace('0.8', '1')),
                 borderWidth: 1
@@ -484,6 +483,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
