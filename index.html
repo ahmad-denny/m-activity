@@ -236,7 +236,14 @@ function parseCSV(text) {
 
 function drawChart(data) {
     const ctx = document.getElementById('myBarChart').getContext('2d');
-
+    const backgroundColors = data.labels.map(label => {
+    if (label.startsWith('TOTAL -')) {
+            // Warna khusus untuk Total Branch
+            return 'rgba(78, 51, 126, 0.9)'; // Ungu/Purple yang lebih solid
+        }
+        // Warna default atau acak untuk Office
+        return getRandomColor(0.7); 
+    });
     if (myChart) {
         myChart.destroy();
     }
@@ -255,6 +262,7 @@ function drawChart(data) {
             datasets: [{
                 label: 'Office Activity',
                 data: data.values,
+                backgroundColor: backgroundColors,
                 backgroundColor: staticColors,
                 borderColor: staticColors.map(c => c.replace('0.8', '1')),
                 borderWidth: 1
@@ -365,57 +373,87 @@ function updateFilterOptions(filterElement, values, defaultText) {
 
 // app.js (MODIFIKASI PENTING PADA BAGIAN CHART)
 
+// app.js (MODIFIKASI PENTING)
+
 function filterAndSearchTable() {
+    // Ambil nilai filter
     const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
     const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
     const tableBody = document.getElementById('tableBody');
 
-    // 1. Saring Data Mentah (Sama seperti sebelumnya)
+    // Kolom yang nilainya akan dijumlahkan (Pastikan nama kolom ini benar)
+    const COLUMN_TO_TOTAL = 'Office Activity'; 
+    
+    // Saring data mentah (Hanya data yang cocok dengan filter yang dipilih)
     const filteredData = tableData.filter(row => {
-        // ... (Logika penyaringan BranchMatch dan OfficeMatch)
         const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
         const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
         return BranchMatch && OfficeMatch;
     });
 
-    // 2. Akumulasi Data untuk Chart (NEW LOGIC)
-    
-    // Gunakan Map untuk menyimpan total: Key = 'Main Branch', Value = Total Activity
-    const branchTotals = new Map(); 
-    
-    // Tentukan kolom yang ingin Anda tampilkan totalnya di Chart.
-    // Asumsikan kita menggunakan kolom 'Office Activity' (sesuaikan jika nama kolom berbeda)
-    const COLUMN_TO_TOTAL = 'Total'; 
+    // TENTUKAN LOGIKA PENGELOMPOKAN UNTUK CHART
+    const chartTotals = new Map();
+    let chartGroupKey = 'Main Branch'; // Default group by Main Branch
 
-    filteredData.forEach(row => {
-        const branchName = row['Main Branch'];
-        // Pastikan nilainya adalah angka, jika tidak, anggap 0
-        const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0; 
+    if (BranchValue !== "" && OfficeValue === "") {
+        // Mode Detail: Main Branch dipilih, Office kosong. Kita tampilkan Main Branch & Officenya.
         
-        // Akumulasi total
-        const currentTotal = branchTotals.get(branchName) || 0;
-        branchTotals.set(branchName, currentTotal + activityValue);
+        // 1. Hitung Total Main Branch secara keseluruhan
+        let totalBranchActivity = 0;
         
-        // ... (Logika perbaruan Tampilan Tabel, yang sudah Anda miliki) ...
-        // (Anda bisa memindahkan logika perbaruan tabel di sini, atau membiarkannya di loop terpisah)
-    });
+        // 2. Hitung total per Office
+        filteredData.forEach(row => {
+            const officeName = row['Office'];
+            const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
+            
+            // Akumulasi total Office
+            const currentOfficeTotal = chartTotals.get(officeName) || 0;
+            chartTotals.set(officeName, currentOfficeTotal + activityValue);
+
+            // Akumulasi Total Branch (untuk bar/titik pertama)
+            totalBranchActivity += activityValue;
+        });
+
+        // 3. Tambahkan Total Branch sebagai entri pertama di Map
+        // Gunakan nama unik agar mudah diidentifikasi, misal: "TOTAL - [Nama Branch]"
+        chartTotals.set(`TOTAL - ${BranchValue.toUpperCase()}`, totalBranchActivity);
+        
+        // Atur agar Total Branch muncul pertama
+        const tempLabels = [`TOTAL - ${BranchValue.toUpperCase()}`].concat(Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL -')));
+        
+        // Dapatkan nilai sesuai urutan label
+        const finalLabels = tempLabels;
+        const finalValues = finalLabels.map(label => chartTotals.get(label));
     
-    // 3. Konversi Map ke Format Data Chart
-    const finalLabels = Array.from(branchTotals.keys()); // Nama Main Branch
-    const finalValues = Array.from(branchTotals.values()); // Total Activity per Main Branch
-    
+    } else {
+        // Mode Ringkasan: Default (atau Main Branch & Office terisi), Group by Main Branch.
+        
+        filteredData.forEach(row => {
+            const groupKey = row[chartGroupKey];
+            const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0; 
+            
+            const currentTotal = chartTotals.get(groupKey) || 0;
+            chartTotals.set(groupKey, currentTotal + activityValue);
+        });
+        
+        const finalLabels = Array.from(chartTotals.keys()); 
+        const finalValues = Array.from(chartTotals.values());
+    }
+
+    // 4. Proses dan Gambar Ulang Grafik
     const chartDataResult = { labels: finalLabels, values: finalValues };
-    const sortedChartData = sortDataByValue(chartDataResult, 'desc');
+    const sortedChartData = sortDataByValue(chartDataResult, 'desc'); // Sortir berdasarkan nilai (kecuali pada mode detail, kita abaikan sorting di sini)
 
-    // 4. Gambar Ulang Grafik
-    drawChart(sortedChartData);
+    // Jika kita dalam mode detail, kita ingin urutan Branch Total dulu, lalu Office.
+    // Jika fungsi sortDataByValue Anda tidak mendukung pengecualian, biarkan sorting berjalan, 
+    // atau modifikasi drawChart untuk tidak mensortir jika BranchValue terisi.
+    
+    drawChart(sortedChartData); 
 
-    // 5. Perbarui Tampilan Tabel (Pindahkan logika DOM update tabel ke sini jika belum ada)
-    // Logika ini memastikan tabel juga diperbarui.
+    // 5. Perbarui Tampilan Tabel (Sama seperti sebelumnya)
     tableBody.innerHTML = '';
     filteredData.forEach(row => {
         let tr = document.createElement('tr');
-        // Asumsi urutan kolom Anda
         Object.values(row).forEach(cell => {
              let td = document.createElement('td');
              td.textContent = cell;
@@ -446,6 +484,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
