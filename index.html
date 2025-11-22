@@ -130,7 +130,7 @@
         </div>
 
         <div class="filter-container">
-            <select id="BranchFilter" onchange="filterAndSearchTable()">
+            <select id="BranchFilter" onchange="updateOfficeFilter(this.value)">
                 <option value="">Main Branch</option>
                 </select>
             <select id="OfficeFilter" onchange="filterAndSearchTable()">
@@ -167,7 +167,9 @@ const REPO_NAME = 'm-activity';
 const BASE_PATH = './';
 let myChart = null;
 let tableData = [];
-
+let allOffices = new Set(); // Tambahkan variabel global untuk menyimpan semua Office unik
+let allBranches = new Set(); // Tambahkan variabel global untuk menyimpan semua Main Branch unik
+    
 document.addEventListener('DOMContentLoaded', function() {
    
     // Memuat data tabel
@@ -277,6 +279,34 @@ function drawChart(data) {
     });
 }
 
+// FUNGSI BARU: Dipanggil saat Main Branch berubah
+function updateOfficeFilter(selectedBranch) {
+    const OfficeFilter = document.getElementById('OfficeFilter');
+    
+    // 1. Reset Office Filter
+    OfficeFilter.innerHTML = '<option value="">Office</option>'; 
+    
+    if (selectedBranch === "") {
+        // Jika Main Branch direset (dipilih "All"), tampilkan semua Office
+        updateFilterOptions(OfficeFilter, allOffices, 'Office');
+    } else {
+        // 2. Saring data untuk mendapatkan Office yang relevan
+        let relevantOffices = new Set();
+        tableData.forEach(row => {
+            // Konversi ke string agar dapat dibandingkan dengan string kosong/nilai filter
+            if (String(row['Main Branch']).toLowerCase() === selectedBranch.toLowerCase()) {
+                relevantOffices.add(row['Office']);
+            }
+        });
+        
+        // 3. Update dropdown Office
+        updateFilterOptions(OfficeFilter, relevantOffices, 'Office');
+    }
+
+    // Panggil filterAndSearchTable untuk menyaring tabel dan chart dengan kombinasi filter baru
+    filterAndSearchTable();
+}
+    
 function populateTable(data) {
     const tableHead = document.getElementById('tableHead');
     const tableBody = document.getElementById('tableBody');
@@ -285,11 +315,14 @@ function populateTable(data) {
 
     tableHead.innerHTML = '';
     tableBody.innerHTML = '';
-    tableData = [];
-    let Offices = new Set();
-    let Branches = new Set();
+    tableData = data; // Simpan data mentah ke variabel global
+
+    // Reset Sets global
+    allOffices.clear();
+    allBranches.clear();
 
     if (data.length > 0) {
+        // ... (Kode untuk membuat header tabel) ...
         Object.keys(data[0]).forEach(header => {
             let th = document.createElement('th');
             th.textContent = header;
@@ -297,6 +330,7 @@ function populateTable(data) {
         });
 
         data.forEach(row => {
+            // ... (Kode untuk membuat baris tabel) ...
             let tr = document.createElement('tr');
             Object.values(row).forEach(cell => {
                 let td = document.createElement('td');
@@ -304,19 +338,23 @@ function populateTable(data) {
                 tr.appendChild(td);
             });
             tableBody.appendChild(tr);
-            tableData.push(row);
-            Offices.add(row['Office']);
-            Branches.add(row['Main Branch']);
+            
+            // Isi Set global
+            allOffices.add(row['Office']);
+            allBranches.add(row['Main Branch']);
         });
 
-        updateFilterOptions(OfficeFilter, Offices, 'Office');
-        updateFilterOptions(BranchFilter, Branches, 'Main Branch');
+        // Update opsi filter menggunakan Set global
+        updateFilterOptions(OfficeFilter, allOffices, 'Office');
+        updateFilterOptions(BranchFilter, allBranches, 'Main Branch');
     }
 }
 
+// FUNGSI UPDATE FILTER OPTIONS (Tidak berubah, tetapi menggunakan Set global sekarang)
 function updateFilterOptions(filterElement, values, defaultText) {
     filterElement.innerHTML = `<option value="">${defaultText}</option>`;
-    values.forEach(value => {
+    const sortedValues = Array.from(values).sort(); // Sortir secara alfabetis agar rapi
+    sortedValues.forEach(value => {
         let option = document.createElement('option');
         option.value = value;
         option.textContent = value;
@@ -374,10 +412,16 @@ function filterAndSearchTable() {
     drawChart(sortedChartData);
 }
 
+// FUNGSI FILTERANDSEARCHTABLE (Tidak perlu diubah, karena sudah dipanggil oleh updateOfficeFilter)
+// ... (Biarkan fungsi filterAndSearchTable tetap sama) ...
+
+// FUNGSI RESETFILTER (Diperbarui untuk memanggil updateOfficeFilter saat direset)
 function resetFilter() {
     document.getElementById('OfficeFilter').value = "";
     document.getElementById('BranchFilter').value = "";
-    filterAndSearchTable(); // Memanggil filterAndSearchTable untuk merender ulang dengan filter kosong
+    
+    // Panggil updateOfficeFilter dengan nilai kosong untuk mengembalikan semua opsi Office
+    updateOfficeFilter(""); 
 }
 
 function printTable() {
@@ -389,6 +433,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
