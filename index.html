@@ -287,7 +287,7 @@ function updateOfficeFilter(selectedBranch) {
     // 1. Reset Office Filter
     OfficeFilter.innerHTML = '<option value="">Office</option>'; 
     
-    if (selectedBranch === "") {
+    if (selectedBranch === "Main Branch") {
         // Jika Main Branch direset (dipilih "All"), tampilkan semua Office
         updateFilterOptions(OfficeFilter, allOffices, 'Office');
     } else {
@@ -385,7 +385,7 @@ function filterAndSearchTable() {
     
     // Tentukan kolom yang ingin Anda tampilkan totalnya di Chart.
     // Asumsikan kita menggunakan kolom 'Office Activity' (sesuaikan jika nama kolom berbeda)
-    const COLUMN_TO_TOTAL = 'Office Activity'; 
+    const COLUMN_TO_TOTAL = 'Total'; 
 
     filteredData.forEach(row => {
         const branchName = row['Main Branch'];
@@ -446,6 +446,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
