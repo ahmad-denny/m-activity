@@ -426,7 +426,7 @@ function filterAndSearchTable() {
 
     // Kasus 1: Main Branch (All) dipilih, Office (All) dipilih. (Poin 1)
     if (BranchValue === "" && OfficeValue === "") {
-        chartGroupKey = 'Main Branch';
+        chartGroupKey = 'Office';
     
     // Kasus 3: Office (All) dipilih, Branch sudah dipilih tapi Office direset. 
     // ATAU Office direset dari filter, kita paksa Grouping ke Office.
@@ -597,6 +597,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
