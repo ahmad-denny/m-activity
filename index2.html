@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M|Activity Performance Region Sumatera</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <style>
+        /* CSS Disederhanakan dan Digabungkan */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f9fa;
+            padding: 20px;
+            margin: 0; /* Menghilangkan margin body yang duplikat */
+        }
+        .container {
+            width: 98%;
+            max-width: 98%;
+            margin: 0 auto; /* Gunakan auto untuk centering */
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            overflow-x: hidden;
+        }
+        #chart-container {
+            width: 98%;
+            height: 300px;
+            margin: 20px auto;
+        }
+        h2 {
+            color: white;
+            background-color: purple;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        h3 {
+            text-align: center;
+            font-size: 13px;
+            font-style: italic;
+            font-weight: lighter;
+            margin: 10px 0;
+        }
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f1f1f1;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            justify-content: flex-start; /* Mengatur item dari kiri */
+        }
+        input[type="text"], select {
+            width: auto; /* Mengubah dari 100% agar sesuai dengan flex */
+            max-width: 300px;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            flex-grow: 1; /* Memungkinkan elemen untuk tumbuh */
+        }
+        .reset-btn, .print-btn {
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .reset-btn {
+            background: darkgreen;
+        }
+        .print-btn {
+            background: #28a745;
+            margin-top: 20px;
+        }
+        
+        /* Gaya Tabel */
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1px;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        td {
+            text-align: left;
+            white-space: nowrap;
+        }
+        table td:nth-child(n+3){ 
+            text-align: center;
+        }
+        th {
+            background-color: purple;
+            color: white;
+        }
+        
+        /* Mobile Responsiveness Disederhanakan */
+        @media (max-width: 768px) {
+            .filter-container {
+                flex-direction: column;
+            }
+            input, select, .reset-btn, .print-btn {
+                width: 100%; /* Membuat filter dan tombol penuh lebar di mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>M-Activity Performance Region Sumatera</h2>
+        <div id="chart-container">
+            <canvas id="myBarChart"></canvas>
+        </div>
+
+        <div class="filter-container">
+            <select id="BranchFilter" onchange="filterAndSearchTable()">
+                <option value="">Main Branch</option>
+                </select>
+            <select id="OfficeFilter" onchange="filterAndSearchTable()">
+                <option value="">Office</option>
+                </select>
+            <button class="reset-btn" onclick="resetFilter()">Reset Filter</button>
+            
+            <h3><p id="time-date"></p></h3>
+        </div>
+
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr id="tableHead"></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>    
+    <br>    
+    </div>
+    
+    <button class="print-btn" onclick="printTable()">Print / Save PDF</button>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
+
+// app.js
+const ChartDataLabels = window.ChartDataLabels;
+// GANTI 'nama-repo-anda' dengan nama repositori Anda. JANGAN GUNAKAN SLASH DIAKHIR.
+const REPO_NAME = 'm-activity';
+const BASE_PATH = './';
+let myChart = null;
+let tableData = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('./data.csv')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Gagal memuat file: ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(csvText => {
+            const rawData = parseCSV(csvText);
+            const sortedData = sortDataByValue(rawData, 'desc');
+            drawChart(sortedData);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal memuat atau memproses data. Pastikan Anda menjalankan ini di server lokal dan file data.csv ada.');
+        });
+    
+    // Memuat data tabel
+    fetch('Dataset.json')
+        .then(response => response.json())
+        .then(data => populateTable(data))
+        .catch(error => console.error('Error loading JSON:', error));
+        
+    updateTimeDate(); // Initial time update
+    setInterval(updateTimeDate, 1000); // Update every second
+});
+
+function updateTimeDate() {
+    const now = new Date();
+    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
+    const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById("time-date").innerHTML = `${date} | ${time} WIB`;
+}
+
+function sortDataByValue(data, sortOrder = 'desc') {
+    const pairedData = data.labels.map((label, index) => ({
+        label: label,
+        value: data.values[index]
+    }));
+
+    pairedData.sort((a, b) => {
+        return sortOrder === 'asc' ? a.value - b.value : b.value - a.value;
+    });
+
+    const sortedLabels = pairedData.map(item => item.label);
+    const sortedValues = pairedData.map(item => item.value);
+
+    return { labels: sortedLabels, values: sortedValues };
+}
+
+function getRandomColor(alpha = 1) {
+    const r = Math.floor(Math.random() * 255);
+    const g = Math.floor(Math.random() * 255);
+    const b = Math.floor(Math.random() * 255);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function parseCSV(text) {
+    const rows = text.split('\n').filter(row => row.trim() !== '');
+    const labels = [];
+    const values = [];
+
+    for (let i = 1; i < rows.length; i++) {
+        const columns = rows[i].split(';');
+        if (columns.length >= 2) {
+            const label = columns[0].trim();
+            const value = parseFloat(columns[1].trim());
+
+            if (label && !isNaN(value)) {
+                labels.push(label);
+                values.push(value);
+            }
+        }
+    }
+    return { labels, values };
+}
+
+function drawChart(data) {
+    const ctx = document.getElementById('myBarChart').getContext('2d');
+
+    if (myChart) {
+        myChart.destroy();
+    }
+    
+    // Warna statis untuk chart line
+    const staticColors = [
+        'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)',
+        'rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)'
+    ];
+
+    myChart = new Chart(ctx, {
+        type: 'line',
+        plugins: [ChartDataLabels],
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Office Activity',
+                data: data.values,
+                backgroundColor: staticColors,
+                borderColor: staticColors.map(c => c.replace('0.8', '1')),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { beginAtZero: true, grid: { display: false }, border: { display: false }, ticks: { maxRotation: 90, minRotation: 90 } },
+                y: { beginAtZero: true, grid: { display: false }, border: { display: false }, ticks: { display: false } }
+            },
+            plugins: {
+                datalabels: {
+                    color: '#000',
+                    font: { weight: 'normal' },
+                    anchor: 'end',
+                    align: 'end',
+                    formatter: (value) => value.toLocaleString()
+                },
+            }
+        }
+    });
+}
+
+function populateTable(data) {
+    const tableHead = document.getElementById('tableHead');
+    const tableBody = document.getElementById('tableBody');
+    const OfficeFilter = document.getElementById('OfficeFilter');
+    const BranchFilter = document.getElementById('BranchFilter');
+
+    tableHead.innerHTML = '';
+    tableBody.innerHTML = '';
+    tableData = [];
+    let Offices = new Set();
+    let Branches = new Set();
+
+    if (data.length > 0) {
+        Object.keys(data[0]).forEach(header => {
+            let th = document.createElement('th');
+            th.textContent = header;
+            tableHead.appendChild(th);
+        });
+
+        data.forEach(row => {
+            let tr = document.createElement('tr');
+            Object.values(row).forEach(cell => {
+                let td = document.createElement('td');
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+            tableData.push(row);
+            Offices.add(row['Office']);
+            Branches.add(row['Main Branch']);
+        });
+
+        updateFilterOptions(OfficeFilter, Offices, 'Office');
+        updateFilterOptions(BranchFilter, Branches, 'Main Branch');
+    }
+}
+
+function updateFilterOptions(filterElement, values, defaultText) {
+    filterElement.innerHTML = `<option value="">${defaultText}</option>`;
+    values.forEach(value => {
+        let option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        filterElement.appendChild(option);
+    });
+}
+
+function filterAndSearchTable() {
+    const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
+    const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
+
+    document.getElementById('tableBody').querySelectorAll('tr').forEach(row => {
+        let cells = row.getElementsByTagName('td');
+        
+        // Asumsi kolom Branch ada di index 0 dan Office di index 1 (sesuai cara pengumpulan Set)
+        let BranchMatch = BranchValue === "" || cells[0].textContent.toLowerCase() === BranchValue;
+        let OfficeMatch = OfficeValue === "" || cells[1].textContent.toLowerCase() === OfficeValue;
+
+        if (OfficeMatch && BranchMatch) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+
+function resetFilter() {
+    document.getElementById('OfficeFilter').value = "";
+    document.getElementById('BranchFilter').value = "";
+    filterAndSearchTable();
+}
+
+function printTable() {
+    let tableContent = document.getElementById("dataTable").outerHTML;
+    let originalContent = document.body.innerHTML;
+
+    document.body.innerHTML = tableContent;
+    window.print();
+    document.body.innerHTML = originalContent;
+}
