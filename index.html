@@ -7,480 +7,136 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        #chart-container {
-            width: 98%;
-            height: 300px; /* Tinggi chart diatur via CSS */
-            margin: 20px auto;
-        }
-    </style>    
-    <style>
-
-        .date-container {
-            text-align: left;
-            background: transparent;
-            color: rgb(3, 3, 3);
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: lighter;
-        }
-        
-        .date-container label {
-            margin-right: 5px;
-        }
-        
-        #datePicker {
-            padding: 8px;
-            font-size: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-
+        /* CSS Disederhanakan dan Digabungkan */
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             background-color: #f8f9fa;
             padding: 20px;
+            margin: 0; /* Menghilangkan margin body yang duplikat */
         }
-
         .container {
             width: 98%;
             max-width: 98%;
-            margin: 0;
+            margin: 0 auto; /* Gunakan auto untuk centering */
             background: #fff;
             padding: 10px;
             border-radius: 10px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
             overflow-x: hidden;
         }
-
-
-        .header-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: purple;
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
+        #chart-container {
+            width: 98%;
+            height: 300px;
+            margin: 20px auto;
         }
-
-        .h1 {
-            margin:0cm;
-        }
-    
-        h3 {
-            text-align:center;
-            font-size: 13px;
-            font-style: italic;
-            font-weight: lighter;
-        }
-
-        .logo {
-<!--            max-width: 50px; -->
-            height: auto;
-            align-content: center;
-        }
-
         h2 {
             color: white;
             background-color: purple;
             padding: 10px;
             border-radius: 5px;
         }
-
-        #filterContainer {
-            display: block; /* Default tampil */
-            transition: all 0.3s ease;
+        h3 {
+            text-align: center;
+            font-size: 13px;
+            font-style: italic;
+            font-weight: lighter;
+            margin: 10px 0;
         }
-        
-        #toggleFilter {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-        
-        #toggleFilter:hover {
-            background: #0056b3;
-        }
-        
-
         .filter-container {
             display: flex;
             flex-wrap: wrap;
-            /*justify-content: space-between;*/
             align-items: center;
             gap: 10px;
             padding: 15px;
             background: #f1f1f1;
             border-radius: 8px;
             margin-bottom: 10px;
+            justify-content: flex-start; /* Mengatur item dari kiri */
         }
-
         input[type="text"], select {
-            width: 100%; 
-            max-width: 300px; /* Sesuaikan max-width sesuai kebutuhan */
+            width: auto; /* Mengubah dari 100% agar sesuai dengan flex */
+            max-width: 300px;
             padding: 10px;
             margin: 5px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
-            box-sizing: border-box; /* Biar padding tidak mempengaruhi ukuran total */
+            box-sizing: border-box;
+            flex-grow: 1; /* Memungkinkan elemen untuk tumbuh */
+        }
+        .reset-btn, .print-btn {
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .reset-btn {
+            background: darkgreen;
+        }
+        .print-btn {
+            background: #28a745;
+            margin-top: 20px;
         }
         
-        .reset-btn {
-            background:darkgreen;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
-        .logout-btn {
-            background:darkred;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
+        /* Gaya Tabel */
         .table-container {
             overflow-x: auto;
             width: 100%;
         }
-
         table {
             width: 100%;
-            max-width: 100%;
             border-collapse: collapse;
             margin-top: 1px;
-            text-align: center;
-            overflow-x: auto;
             font-size: 13px;
         }
-        
         th, td {
             padding: 8px;
             border: 1px solid #ddd;
-            text-align: center; 
+            text-align: center;
         }
-
         td {
-            padding: 8px;
-            border: 1px solid #ddd;
-            text-align: left; 
+            text-align: left;
             white-space: nowrap;
         }
-
         table td:nth-child(n+3){ 
             text-align: center;
         }
-      
         th {
             background-color: purple;
             color: white;
-            text-align: center;
         }
-
-        .highlight-yes {
-            color: #71f28f;
-            font-weight: bold;
-        }
-
-        .highlight-no {
-            color: #d65f6b;
-            font-weight: bold;
-        }
-
-        .highlight-red {
-            color: #d65f6b;
-            font-weight: bold;
-        }
-
-        .print-btn {
-            margin-top: 20px;
-            text-align: left;
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
+        
+        /* Mobile Responsiveness Disederhanakan */
         @media (max-width: 768px) {
-            .logo {
-                width: 20vw;
-                max-width: 140px;
-            }
-
             .filter-container {
                 flex-direction: column;
             }
-
-            input, select, .reset-btn {
-                width: 100%;
+            input, select, .reset-btn, .print-btn {
+                width: 100%; /* Membuat filter dan tombol penuh lebar di mobile */
             }
         }
     </style>
 </head>
 <body>
 
-    <script>
-        const ChartDataLabels = window.ChartDataLabels;
-        // GANTI 'nama-repo-anda' dengan nama repositori Anda. JANGAN GUNAKAN SLASH DIAKHIR.
-        const REPO_NAME = 'm-activity'; 
-        const BASE_PATH = './';        
-        let myChart = null; 
-
-        document.addEventListener('DOMContentLoaded', function() {
-            fetch('./data.csv') 
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Gagal memuat file: ${response.statusText}`);
-                    }
-                    return response.text();
-                })
-                .then(csvText => {
-//                    console.log("Data CSV berhasil dimuat.");
-                    const rawData = parseCSV(csvText);
-                    const sortedData = sortDataByValue(rawData, 'desc');
-                    drawChart(sortedData);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Gagal memuat atau memproses data. Pastikan Anda menjalankan ini di server lokal dan file data.csv ada.');
-                });
-        });
-        /**
-         * Menyortir data label dan nilai berdasarkan nilai numerik.
-         * @param {object} data - Objek {labels, values} dari parseCSV.
-         * @param {string} sortOrder - 'asc' (kecil ke besar) atau 'desc' (besar ke kecil).
-         * @returns {object} Objek data yang sudah disortir.
-         */
-        function sortDataByValue(data, sortOrder = 'desc') {
-            // 1. Pasangkan Label dan Nilai
-            const pairedData = data.labels.map((label, index) => ({
-                label: label,
-                value: data.values[index]
-            }));
-
-            // 2. Sortir Pasangan Data
-            pairedData.sort((a, b) => {
-                if (sortOrder === 'asc') {
-                    return a.value - b.value; // Ascending (Terkecil ke Terbesar)
-                } else {
-                    return b.value - a.value; // Descending (Terbesar ke Terkecil) - Umum untuk Bar Chart
-                }
-            });
-
-            // 3. Pisahkan kembali ke array labels dan values
-            const sortedLabels = pairedData.map(item => item.label);
-            const sortedValues = pairedData.map(item => item.value);
-
-            return { labels: sortedLabels, values: sortedValues };
-        }
-
-        // ----------------------------------------------------
-        // Fungsi Pembantu: Mendapatkan Warna RGB Acak
-        // ----------------------------------------------------
-        function getRandomColor(alpha = 1) {
-            const r = Math.floor(Math.random() * 255);
-            const g = Math.floor(Math.random() * 255);
-            const b = Math.floor(Math.random() * 255);
-            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-
-        // ----------------------------------------------------
-        // Kunci Otomatisasi: Memuat data secara langsung
-        // ----------------------------------------------------
-        
-
-        // ----------------------------------------------------
-        // Fungsi Parsing (Sama seperti sebelumnya)
-        // ----------------------------------------------------
-        function parseCSV(text) {
-            const rows = text.split('\n').filter(row => row.trim() !== '');
-            const labels = [];
-            const values = [];
-
-            for (let i = 1; i < rows.length; i++) {
-                const columns = rows[i].split(';'); 
-
-                if (columns.length >= 2) {
-                    const label = columns[0].trim();
-                    const value = parseFloat(columns[1].trim());
-
-                    if (label && !isNaN(value)) {
-                        labels.push(label);
-                        values.push(value);
-                    }
-                }
-            }
-            return { labels, values };
-        }
-
-        // ----------------------------------------------------
-        // Fungsi Menggambar/Memperbarui Chart (Dengan Warna Acak)
-        // ----------------------------------------------------
-        function drawChart(data) {
-            const ctx = document.getElementById('myBarChart').getContext('2d');
-
-            if (myChart) {
-                myChart.destroy();
-            }
-
-            // --- Bagian yang Berubah ---
-            // Buat array warna acak untuk setiap bar
-            const backgroundColors = [];
-            const borderColors = [];
-            data.labels.forEach(() => {
-                backgroundColors.push(getRandomColor(0.5)); // Opacity 0.5 untuk background
-                borderColors.push(getRandomColor(1));     // Opacity 1 untuk border
-            });
-            // --- Akhir Bagian yang Berubah ---
-
-            myChart = new Chart(ctx, {
-                type: 'line',
-                plugins: [ChartDataLabels],
-                data: {
-                    labels: data.labels, 
-                    datasets: [{
-                        label: 'Office Activity',
-                        data: data.values, 
-                        // Gunakan array warna acak yang sudah dibuat
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.5)',
-                            'rgba(54, 162, 235, 0.5)',
-                            'rgba(255, 206, 86, 0.5)',
-                            'rgba(75, 192, 192, 0.5)',
-                            'rgba(153, 102, 255, 0.5)',
-                            'rgba(255, 159, 64, 0.5)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 206, 86, 1)',
-                            'rgba(75, 192, 192, 1)',
-                            'rgba(153, 102, 255, 1)',
-                            'rgba(255, 159, 64, 1)'
-                        ],                        
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, 
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: {
-                                display: false
-                            },
-                            border: {
-                                display: false                            
-                            },
-                            ticks: {
-                                maxRotation: 90,
-                                minRotation: 90
-                            }
-                            },
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                display: false
-                            },
-                            border: {
-                                display: false
-                            },
-                            ticks: {
-                                display: false
-                            }
-                            }
-                    },
-                    plugins: {
-                        datalabels: {
-                        color: '#000', // Warna teks (putih agar terlihat di bar yang gelap)
-                        font: {
-                            weight: 'normal'
-                        },
-                        // Atur posisi di tengah bar
-                        anchor: 'end', 
-                        align: 'end', 
-                        // Opsional: Format nilai yang ditampilkan
-                        formatter: (value) => {
-                            // Di sini Anda bisa menambahkan format mata uang atau satuan
-                            return value.toLocaleString(); 
-                        }
-                        },
-                        title: {
-//                            display: true,
-//                            text: 'Summary Daily Activity Branch Region Sumatera'
-                        }
-                    }
-                }
-            });
-        }
-    </script>
-
-    
-
     <div class="container">
-        <!--<h1>
-            <img src="img/logo_mdirect.png" alt="Bank Muamalat Logo" class="logo">
-        </h1>-->
-        <h2>M-Activity</h2>
+        <h2>M-Activity Performance Region Sumatera</h2>
         <div id="chart-container">
             <canvas id="myBarChart"></canvas>
         </div>
 
-
         <div class="filter-container">
-        <!--    <input type="text" id="searchBox" placeholder="Name or Marketing Code..." onkeyup="filterAndSearchTable()">
-        -->    
-            <!--    <select id="positionFilter" onchange="filterAndSearchTable()">
-                <option value="">All Position</option>
-                <option value="RM">RM</option>
-                <option value="RM C">RM Consumer</option>
-                <option value="RM P">RM Prioritas</option>
-                <option value="RM F">RM Funding & Hajj</option>                
-                <option value="CS">CS</option>                
-            </select>-->    
             <select id="BranchFilter" onchange="filterAndSearchTable()">
                 <option value="">Main Branch</option>
-            </select>
+                </select>
             <select id="OfficeFilter" onchange="filterAndSearchTable()">
                 <option value="">Office</option>
-            </select>
-            <!--
-            <select id="zeroMTDFilter" onchange="filterAndSearchTable()">
-                <option value="">Login MTD</option>
-                <option value="0">NOT Login MTD</option>            
-            </select>
-            <select id="zeroDTDFilter" onchange="filterAndSearchTable()">
-                <option value="">Login DTD</option>
-                <option value="N">NOT Login DTD</option>            
-            </select>
-            -->
-            <button class="reset-btn" onclick="resetFilter()">Reset</button>
+                </select>
+            <button class="reset-btn" onclick="resetFilter()">Reset Filter</button>
             
             <h3><p id="time-date"></p></h3>
         </div>
@@ -492,243 +148,226 @@
                 </thead>
                 <tbody id="tableBody"></tbody>
             </table>
-        </div>       
+        </div>    
     <br>    
     </div>
+    
     <button class="print-btn" onclick="printTable()">Print / Save PDF</button>
 
-    <script>
-        const successSection = document.getElementById('successSection');    
-        
-        function updateTimeDate() {
-            const now = new Date();
-            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
-            const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById("time-date").innerHTML = `${date} | ${time} WIB`; 
-            }
-        setInterval(updateTimeDate, 1000); // Update every second
-        updateTimeDate(); // Initial update
+    <script src="app.js"></script>
 
-        document.addEventListener("DOMContentLoaded", function() {
-            let today = new Date();
-            let formattedDate = today.toLocaleDateString("id-ID", { 
-                year: "numeric", 
-                month: "long", 
-                day: "numeric" 
-            });
-            document.getElementById("currentDate").textContent = formattedDate;
-        });
-        
-        let tableData = [];
-        fetch('Dataset.json')
-            .then(response => response.json())
-            .then(data => populateTable(data))
-            .catch(error => console.error('Error loading JSON:', error));
-
-            document.getElementById("toggleFilter").addEventListener("click", function() {
-                let filter = document.getElementById("filterContainer");
-                if (filter.style.display === "none") {
-                    filter.style.display = "block"; 
-                } else {
-                    filter.style.display = "none"; }
-            });
-
-        function populateTable(data) {
-            const tableHead = document.getElementById('tableHead');
-            const tableBody = document.getElementById('tableBody');
-            const OfficeFilter = document.getElementById('OfficeFilter');
-            const BranchFilter = document.getElementById('BranchFilter');
-            
-            //const zeroMTDFilter = document.getElementById('zeroMTDFilter');
-            //const zeroDTDFilter = document.getElementById('zeroDTDFilter');
-                        
-            tableHead.innerHTML = '';
-            tableBody.innerHTML = '';
-            tableData = [];
-            let Offices = new Set();
-            let Branches = new Set();
-
-            if (data.length > 0) {
-                Object.keys(data[0]).forEach(header => {
-                    let th = document.createElement('th');
-                    th.textContent = header;
-                    tableHead.appendChild(th);
-                });
-
-                data.forEach(row => {
-                    let tr = document.createElement('tr');
-                    Object.values(row).forEach(cell => {
-                        let td = document.createElement('td');
-                        td.textContent = cell;
-                        tr.appendChild(td);
-                    });
-
-                    //let lastCell = tr.cells[tr.cells.length - 1];
-                    //if (lastCell.textContent === "Y") lastCell.classList.add("highlight-yes");
-                    //else if (lastCell.textContent === "N") lastCell.classList.add("highlight-no");
-
-                    //let loginMTDCell = tr.cells[5];  
-                    //if (loginMTDCell.textContent === "0") {
-                    //    loginMTDCell.classList.add("highlight-red");
-                    //}
-        
-                    //let loginDTDCell = tr.cells[6];  
-                    //if (loginDTDCell.textContent === "Y") loginDTDCell.classList.add("highlight-yes");
-                    //else if (loginDTDCell.textContent === "N") loginDTDCell.classList.add("highlight-no");
-                    
-
-                    tableBody.appendChild(tr);
-                    tableData.push(row);
-                    Offices.add(row['Office']);
-                    Branches.add(row['Main Branch']);
-                });
-
-                updateFilterOptions1(OfficeFilter, Offices);
-                updateFilterOptions2(BranchFilter, Branches);
-            }
-        }
-
-        function updateFilterOptions1(filterElement, values) {
-            filterElement.innerHTML = '<option value="">Office</option>';
-            values.forEach(value => {
-                let option = document.createElement('option');
-                option.value = value;
-                option.textContent = value;
-                filterElement.appendChild(option);
-            });
-        }
-        function updateFilterOptions2(filterElement, values) {
-            filterElement.innerHTML = '<option value="">Main Branch</option>';
-            values.forEach(value => {
-                let option = document.createElement('option');
-                option.value = value;
-                option.textContent = value;
-                filterElement.appendChild(option);
-            });
-        }
-
-        function filterAndSearchTable() {
-            //const searchValue = document.getElementById('searchBox').value.toLowerCase();
-            //const positionValue = document.getElementById('positionFilter').value.toLowerCase();
-            const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
-            const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
-            //const zeroMTDValue = document.getElementById('zeroMTDFilter').value.toLowerCase();
-            //const zeroDTDValue = document.getElementById('zeroDTDFilter').value.toLowerCase();
-
-            document.getElementById('tableBody').querySelectorAll('tr').forEach(row => {
-                let cells = row.getElementsByTagName('td');
-
-                //let nameMarketingMatch = searchValue === "" || 
-                //                         cells[1].textContent.toLowerCase().includes(searchValue) || 
-                //                         cells[2].textContent.toLowerCase().includes(searchValue);
-
-                //let positionMatch = positionValue === "" || cells[3].textContent.trim().toLowerCase().includes(positionValue);
-                let OfficeMatch = OfficeValue === "" || cells[1].textContent.toLowerCase() === OfficeValue;
-                let BranchMatch = BranchValue === "" || cells[0].textContent.toLowerCase() === BranchValue;             
-                //let zeroMTDMatch = zeroMTDValue === "" || cells[5].textContent.toLowerCase() === zeroMTDValue;             
-                //let zeroDTDMatch = zeroDTDValue === "" || cells[6].textContent.toLowerCase() === zeroDTDValue;             
-
-                if (OfficeMatch && BranchMatch) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
-            });
-        }
-        function resetFilter() {
-            //document.getElementById('searchBox').value = "";
-            //document.getElementById('positionFilter').value = "";
-            document.getElementById('OfficeFilter').value = "";
-            document.getElementById('BranchFilter').value = "";
-            //document.getElementById('zeroMTDFilter').value = "";
-            //document.getElementById('zeroDTDFilter').value = "";            
-            filterAndSearchTable();
-        }
-
-        function printTable() {
-            let tableContent = document.getElementById("dataTable").outerHTML;
-            let originalContent = document.body.innerHTML;
-        
-            /*document.body.innerHTML = "<h1>M-Direct <i>as of " + document.getElementById('BranchFilter').value.toLowerCase() + 
-                "</i></h1>" + tableContent; */
-            document.body.innerHTML = tableContent; 
-            window.print(); 
-            document.body.innerHTML = originalContent; 
-        }
-        
-        function showMessage(text, isError = false) {
-            const el = document.createElement('div');
-            el.className = `message-box px-6 py-3 rounded-full shadow-lg text-white font-semibold mb-3 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
-            el.textContent = text;
-            messageContainer.appendChild(el);
-
-            // Remove the message after animation finishes (3s)
-            setTimeout(() => {
-                el.remove();
-            }, 3000);
-        }
-
-        function logout() {
-            // 1. Show message
-            showMessage('Logging out...', false);
-
-            // 2. Hide Success Section with animation
-            successSection.style.opacity = '0';
-            successSection.style.transform = 'translateY(20px)';
-            successSection.classList.remove('opacity-100');
-
-            // Wait for the success section to hide before showing login
-            setTimeout(() => {
-                successSection.classList.add('hidden');
-
-                // 3. Reset and Show Login Section with animation
-                loginSection.classList.remove('hidden');
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-
-                setTimeout(() => {
-                    loginSection.style.opacity = '1';
-                    loginSection.style.transform = 'translateY(0)';
-                }, 50);
-            }, 500);
-        }
-
-
-    </script>
 </body>
-
 </html>
 
+// app.js
+const ChartDataLabels = window.ChartDataLabels;
+// GANTI 'nama-repo-anda' dengan nama repositori Anda. JANGAN GUNAKAN SLASH DIAKHIR.
+const REPO_NAME = 'm-activity';
+const BASE_PATH = './';
+let myChart = null;
+let tableData = [];
 
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('./data.csv')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Gagal memuat file: ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(csvText => {
+            const rawData = parseCSV(csvText);
+            const sortedData = sortDataByValue(rawData, 'desc');
+            drawChart(sortedData);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal memuat atau memproses data. Pastikan Anda menjalankan ini di server lokal dan file data.csv ada.');
+        });
+    
+    // Memuat data tabel
+    fetch('Dataset.json')
+        .then(response => response.json())
+        .then(data => populateTable(data))
+        .catch(error => console.error('Error loading JSON:', error));
+        
+    updateTimeDate(); // Initial time update
+    setInterval(updateTimeDate, 1000); // Update every second
+});
 
+function updateTimeDate() {
+    const now = new Date();
+    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
+    const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById("time-date").innerHTML = `${date} | ${time} WIB`;
+}
 
+function sortDataByValue(data, sortOrder = 'desc') {
+    const pairedData = data.labels.map((label, index) => ({
+        label: label,
+        value: data.values[index]
+    }));
 
+    pairedData.sort((a, b) => {
+        return sortOrder === 'asc' ? a.value - b.value : b.value - a.value;
+    });
 
+    const sortedLabels = pairedData.map(item => item.label);
+    const sortedValues = pairedData.map(item => item.value);
 
+    return { labels: sortedLabels, values: sortedValues };
+}
 
+function getRandomColor(alpha = 1) {
+    const r = Math.floor(Math.random() * 255);
+    const g = Math.floor(Math.random() * 255);
+    const b = Math.floor(Math.random() * 255);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
+function parseCSV(text) {
+    const rows = text.split('\n').filter(row => row.trim() !== '');
+    const labels = [];
+    const values = [];
 
+    for (let i = 1; i < rows.length; i++) {
+        const columns = rows[i].split(';');
+        if (columns.length >= 2) {
+            const label = columns[0].trim();
+            const value = parseFloat(columns[1].trim());
 
+            if (label && !isNaN(value)) {
+                labels.push(label);
+                values.push(value);
+            }
+        }
+    }
+    return { labels, values };
+}
 
+function drawChart(data) {
+    const ctx = document.getElementById('myBarChart').getContext('2d');
 
+    if (myChart) {
+        myChart.destroy();
+    }
+    
+    // Warna statis untuk chart line
+    const staticColors = [
+        'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)',
+        'rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)'
+    ];
 
+    myChart = new Chart(ctx, {
+        type: 'line',
+        plugins: [ChartDataLabels],
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Office Activity',
+                data: data.values,
+                backgroundColor: staticColors,
+                borderColor: staticColors.map(c => c.replace('0.8', '1')),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { beginAtZero: true, grid: { display: false }, border: { display: false }, ticks: { maxRotation: 90, minRotation: 90 } },
+                y: { beginAtZero: true, grid: { display: false }, border: { display: false }, ticks: { display: false } }
+            },
+            plugins: {
+                datalabels: {
+                    color: '#000',
+                    font: { weight: 'normal' },
+                    anchor: 'end',
+                    align: 'end',
+                    formatter: (value) => value.toLocaleString()
+                },
+            }
+        }
+    });
+}
 
+function populateTable(data) {
+    const tableHead = document.getElementById('tableHead');
+    const tableBody = document.getElementById('tableBody');
+    const OfficeFilter = document.getElementById('OfficeFilter');
+    const BranchFilter = document.getElementById('BranchFilter');
 
+    tableHead.innerHTML = '';
+    tableBody.innerHTML = '';
+    tableData = [];
+    let Offices = new Set();
+    let Branches = new Set();
 
+    if (data.length > 0) {
+        Object.keys(data[0]).forEach(header => {
+            let th = document.createElement('th');
+            th.textContent = header;
+            tableHead.appendChild(th);
+        });
 
+        data.forEach(row => {
+            let tr = document.createElement('tr');
+            Object.values(row).forEach(cell => {
+                let td = document.createElement('td');
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+            tableData.push(row);
+            Offices.add(row['Office']);
+            Branches.add(row['Main Branch']);
+        });
 
+        updateFilterOptions(OfficeFilter, Offices, 'Office');
+        updateFilterOptions(BranchFilter, Branches, 'Main Branch');
+    }
+}
 
+function updateFilterOptions(filterElement, values, defaultText) {
+    filterElement.innerHTML = `<option value="">${defaultText}</option>`;
+    values.forEach(value => {
+        let option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        filterElement.appendChild(option);
+    });
+}
 
+function filterAndSearchTable() {
+    const OfficeValue = document.getElementById('OfficeFilter').value.toLowerCase();
+    const BranchValue = document.getElementById('BranchFilter').value.toLowerCase();
 
+    document.getElementById('tableBody').querySelectorAll('tr').forEach(row => {
+        let cells = row.getElementsByTagName('td');
+        
+        // Asumsi kolom Branch ada di index 0 dan Office di index 1 (sesuai cara pengumpulan Set)
+        let BranchMatch = BranchValue === "" || cells[0].textContent.toLowerCase() === BranchValue;
+        let OfficeMatch = OfficeValue === "" || cells[1].textContent.toLowerCase() === OfficeValue;
 
+        if (OfficeMatch && BranchMatch) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
 
+function resetFilter() {
+    document.getElementById('OfficeFilter').value = "";
+    document.getElementById('BranchFilter').value = "";
+    filterAndSearchTable();
+}
 
+function printTable() {
+    let tableContent = document.getElementById("dataTable").outerHTML;
+    let originalContent = document.body.innerHTML;
 
-
-
-
-
-
-
-
-
+    document.body.innerHTML = tableContent;
+    window.print();
+    document.body.innerHTML = originalContent;
+}
