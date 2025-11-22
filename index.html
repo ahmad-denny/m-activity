@@ -381,7 +381,7 @@ function filterAndSearchTable() {
     const tableBody = document.getElementById('tableBody');
 
     // Kolom yang nilainya akan dijumlahkan (Pastikan nama kolom ini benar)
-    const COLUMN_TO_TOTAL = 'Office Activity'; 
+    const COLUMN_TO_TOTAL = 'Total'; 
     
     // Saring data mentah (Hanya data yang cocok dengan filter yang dipilih)
     const filteredData = tableData.filter(row => {
@@ -483,6 +483,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
