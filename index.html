@@ -453,6 +453,9 @@ function filterAndSearchTable() {
     // 4. Proses dan Gambar Ulang Grafik
     // Variabel sekarang dikenal di sini!
     const chartDataResult = { labels: finalLabels, values: finalValues };
+    
+    console.log("Data yang Dihitung Chart:", chartDataResult);
+    
     const sortedChartData = sortDataByValue(chartDataResult, 'desc');
     
     drawChart(sortedChartData);
@@ -491,6 +494,7 @@ function printTable() {
     document.body.innerHTML = originalContent;
 }
 </script>
+
 
 
 
