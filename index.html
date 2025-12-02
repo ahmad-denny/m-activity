@@ -217,12 +217,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function updateTimeDate() {
-    const now = new Date();
-    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
-    const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    document.getElementById("time-date").innerHTML = `${date} | ${time} WIB`;
+            const now = new Date();
+            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
+            const date = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById("time-date").innerHTML = `${date} | ${time}`;
 }
-
+    
 function sortDataByValue(data, sortOrder = 'desc') {
     const pairedData = data.labels.map((label, index) => ({
         label: label,
@@ -590,5 +590,6 @@ function openPage() {
     window.location.href = 'https://bmi-apps.github.io/RegionSumatera/';
 }
 </script>
+
 
 
