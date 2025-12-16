@@ -30,7 +30,8 @@
         #chart-container {
             position: relative;
             width: 98%;
-            height: 300px;
+            /* Tingkatkan tinggi agar label X yang panjang bisa ditampilkan dengan lebih baik */
+            height: 400px; 
             margin: 20px auto;
         }
 
@@ -296,7 +297,8 @@ function drawChart(data) {
 
 
     myChart = new Chart(ctx, {
-        type: 'bar',
+        // Tipe chart 'bar' secara default adalah VERTICAL bar
+        type: 'bar', 
         plugins: [ChartDataLabels],
         data: {
             labels: data.labels,
@@ -312,8 +314,24 @@ function drawChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { beginAtZero: true, grid: { display: false }, border: { display: false }, ticks: { maxRotation: 90, minRotation: 90 } },
-                y: { beginAtZero: true, grid: { display: false }, border: { display: false }, ticks: { display: false } }
+                x: { 
+                    beginAtZero: true, 
+                    grid: { display: true }, // Tampilkan grid X 
+                    border: { display: true }, 
+                    ticks: {
+                        // Tidak perlu rotasi paksa (biarkan Chart.js menanganinya)
+                        autoSkip: false, 
+                        maxRotation: 0, 
+                        minRotation: 0
+                    }
+                },
+                y: { 
+                    beginAtZero: true, 
+                    grid: { display: false }, 
+                    border: { display: false }, 
+                    // Tampilkan ticks/nilai di sumbu Y (kiri)
+                    ticks: { display: true } 
+                }
             },
             plugins: {
                 datalabels: {
@@ -321,6 +339,7 @@ function drawChart(data) {
                     font: { weight: 'normal' },
                     anchor: 'end',
                     align: 'end',
+                    // Data label diletakkan di atas bar
                     formatter: (value) => value.toLocaleString()
                 },
             }
