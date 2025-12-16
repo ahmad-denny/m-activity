@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
-            // Fallback draw chart jika data gagal dimuat (tetapi tidak boleh double call)
+            // Hapus fallback drawChart untuk menghindari error 'Canvas is already in use'
         });
         
     updateTimeDate();
@@ -401,10 +401,12 @@ function populateTable(data) {
             const branchName = row['Main Branch'];
             const officeName = row['Office']; 
             
-            // **PERBAIKAN KRUSIAL DI SINI**
-            let activityValue = Number(row['Total']); // Coba ubah menjadi angka
-            if (isNaN(activityValue) || typeof row['Total'] !== 'number') {
-                // Jika NaN (bukan angka), paksa menjadi 0.
+            // **PERBAIKAN KRUSIAL: Pembersihan Data Agresif**
+            let rawValue = String(row['Total']).replace(/[\s,]/g, ''); // Hapus spasi dan koma
+            let activityValue = Number(rawValue); // Konversi ke Number
+            
+            if (isNaN(activityValue)) {
+                // Jika NaN (bukan angka yang valid), paksa menjadi 0.
                 activityValue = 0;
             }
             
@@ -412,7 +414,6 @@ function populateTable(data) {
             let tr = document.createElement('tr');
             Object.values(row).forEach(cell => {
                 let td = document.createElement('td');
-                // Tampilkan nilai asli di tabel (jika perlu)
                 td.textContent = cell; 
                 tr.appendChild(td);
             });
