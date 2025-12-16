@@ -295,6 +295,16 @@ function drawChart(data) {
             maintainAspectRatio: false,
             indexAxis: 'y', // Chart Horizontal
             
+            // Konfigurasi Layout (untuk menghindari konflik padding pada skala)
+            layout: {
+                padding: {
+                    left: 0,
+                    right: 40, // Tambahkan padding untuk label datalables
+                    top: 10,
+                    bottom: 10
+                }
+            },
+
             scales: {
                 x: { 
                     beginAtZero: true, 
@@ -308,7 +318,9 @@ function drawChart(data) {
                     grid: { display: true },
                     border: { display: true }, 
                     
-                    padding: 0, 
+                    offset: true, 
+                    categoryPercentage: 0.9, 
+                    barPercentage: 0.8, 
                     
                     ticks: { 
                         display: true, 
@@ -316,7 +328,7 @@ function drawChart(data) {
                         
                         align: 'center', 
                         
-                        // **SOLUSI HALUS: Dorong label 1px ke bawah**
+                        // **HACK KESEJAJARAN (1 PIKSEL DORONG KE BAWAH)**
                         padding: {
                             top: 1, 
                             bottom: 0,
@@ -329,9 +341,6 @@ function drawChart(data) {
                             size: 14,
                         }
                     },
-                    offset: true, 
-                    categoryPercentage: 0.9, 
-                    barPercentage: 0.8, 
                 }
             },
             plugins: {
