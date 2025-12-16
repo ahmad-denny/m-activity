@@ -306,7 +306,7 @@ function drawChart(data) {
                     grid: { display: true },
                     border: { display: true }, 
                     
-                    // Hapus padding sumbu
+                    // Padding sumbu diatur 0
                     padding: 0, 
                     
                     ticks: { 
@@ -315,16 +315,17 @@ function drawChart(data) {
                         
                         // Memaksa posisi center
                         align: 'center', 
-                        padding: 0, // Hapus padding tick
+                        // Padding tick diatur 0
+                        padding: 0, 
                         
                         font: {
                             lineHeight: 1.2, 
-                            size: 14 // Ukuran font diperbesar
+                            size: 14 
                         }
                     },
                     offset: true, 
                     categoryPercentage: 0.9, 
-                    barPercentage: 0.9, 
+                    barPercentage: 0.8, 
                 }
             },
             plugins: {
