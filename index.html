@@ -311,14 +311,13 @@ function drawChart(data) {
                         display: true, 
                         mirror: false,
                         
-                        // **SOLUSI HACK: Menggunakan Callback untuk Penyesuaian Vertikal**
+                        // **CUSTOM PIXEL SHIFT: Geser 2px ke bawah**
+                        textStrokeOffsetY: 2, 
+                        
                         callback: function(value, index, values) {
-                            const label = this.getLabelForValue(value);
-                            // Menggunakan baris kosong untuk sedikit menggeser label ke bawah
-                            return [' ', label]; 
+                            return this.getLabelForValue(value);
                         },
                         
-                        // Konfigurasi Font yang Bersih
                         font: {
                             size: 14,
                             lineHeight: 1.2
