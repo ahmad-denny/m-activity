@@ -295,6 +295,15 @@ function drawChart(data) {
             maintainAspectRatio: false,
             indexAxis: 'y', // Chart Horizontal
             
+            layout: {
+                padding: {
+                    left: 0,
+                    right: 40, // Padding untuk label datalables
+                    top: 10,
+                    bottom: 10
+                }
+            },
+
             scales: {
                 x: { 
                     beginAtZero: true, 
@@ -308,24 +317,24 @@ function drawChart(data) {
                     grid: { display: true },
                     border: { display: true }, 
                     
-                    padding: 0, 
+                    offset: true, 
+                    categoryPercentage: 0.9, 
+                    barPercentage: 0.8, 
                     
                     ticks: { 
                         display: true, 
                         mirror: false,
                         
+                        // **PENYESUAIAN UTAMA UNTUK PENYELARASAN**
+                        crossAlign: 'center', // Menyempurnakan penyelarasan vertikal di tengah bar
                         align: 'center', 
+                        padding: 0, 
                         
-                        // **KEMBALIKAN KE FONT DASAR** (ukuran 14 Anda)
                         font: {
                             lineHeight: 1.2, 
                             size: 14,
                         }
-                        // Hapus padding kustom yang menyebabkan masalah
                     },
-                    offset: true, 
-                    categoryPercentage: 0.9, 
-                    barPercentage: 0.8, 
                 }
             },
             plugins: {
@@ -386,7 +395,15 @@ function populateTable(data) {
         data.forEach(row => {
             const branchName = row['Main Branch'];
             const officeName = row['Office']; 
-            const activityValue = parseFloat(row['Total']) || 0; 
+            
+            // **Pembersihan Data Agresif**
+            let rawValue = String(row['Total'] || 0); 
+            rawValue = rawValue.replace(/[^0-9.]/g, ''); 
+            let activityValue = Number(rawValue); 
+            
+            if (isNaN(activityValue)) {
+                activityValue = 0;
+            }
 
             allOffices.add(officeName);
             allBranches.add(branchName);
@@ -394,6 +411,7 @@ function populateTable(data) {
             const currentTotal = officeActivityTotals.get(officeName) || 0;
             officeActivityTotals.set(officeName, currentTotal + activityValue);
             
+            // Tambahkan data ke tabel
             let tr = document.createElement('tr');
             Object.values(row).forEach(cell => {
                 let td = document.createElement('td');
