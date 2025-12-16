@@ -294,7 +294,11 @@ function drawChart(data) {
         // Warna untuk Office aktif
         return staticColors[index % staticColors.length];
     });
-
+    
+    // **Perhitungan Suggested Max yang Lebih Aman dan Besar**
+    const maxVal = data.values.length > 0 ? Math.max(...data.values) : 10;
+    // Tambahkan 25% ruang ekstra untuk label di luar batang
+    const suggestedMax = maxVal * 1.25;
 
     myChart = new Chart(ctx, {
         type: 'bar',
@@ -317,6 +321,8 @@ function drawChart(data) {
             scales: {
                 x: { 
                     beginAtZero: true, 
+                    // Terapkan Suggested Max yang baru
+                    suggestedMax: suggestedMax,
                     grid: { display: false }, 
                     border: { display: false }, 
                     ticks: { display: true } // Sumbu X (nilai) harus ditampilkan
@@ -586,6 +592,7 @@ function openPage() {
 </script>
 </body>
 </html>
+
 
 
 
