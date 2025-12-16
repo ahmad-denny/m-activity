@@ -270,6 +270,7 @@ function drawChart(data) {
         return staticColors[index % staticColors.length];
     });
 
+    // Hitung Max Value + 25% untuk ruang datalabels (agar tidak terpotong)
     const maxVal = data.values.length > 0 ? Math.max(...data.values) : 10;
     const suggestedMax = maxVal * 1.25; 
 
@@ -290,22 +291,26 @@ function drawChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            indexAxis: 'y', 
+            indexAxis: 'y', // Chart Horizontal
             scales: {
                 x: { 
                     beginAtZero: true, 
                     suggestedMax: suggestedMax, 
                     grid: { display: false }, 
                     border: { display: false }, 
-                    ticks: { display: false } 
+                    ticks: { display: false } // Hilangkan nilai/angka pada sumbu X
                 },
                 y: { 
                     beginAtZero: true, 
                     grid: { display: true },
                     border: { display: true }, 
                     ticks: { display: true, mirror: false },
-                    // **PERBAIKAN: Memastikan label berada di tengah bar**
+                    
+                    // **KOREKSI KESEJAJARAN LABEL OFFICE**
                     offset: true, 
+                    // Setel persentase kategori dan bar secara eksplisit
+                    categoryPercentage: 0.8, 
+                    barPercentage: 0.9, 
                 }
             },
             plugins: {
@@ -313,7 +318,7 @@ function drawChart(data) {
                     color: '#000',
                     font: { weight: 'normal' },
                     anchor: 'end',
-                    align: 'end',   
+                    align: 'end',   // Pindah label ke luar bar (kanan)
                     offset: 4,      
                     formatter: (value) => value.toLocaleString()
                 },
