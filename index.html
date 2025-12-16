@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    
+
     <style>
         /* CSS Disederhanakan dan Digabungkan */
         body {
@@ -15,12 +15,12 @@
             text-align: center;
             background-color: #f8f9fa;
             padding: 20px;
-            margin: 0; /* Menghilangkan margin body yang duplikat */
+            margin: 0;
         }
         .container {
             width: 98%;
             max-width: 98%;
-            margin: 0 auto; /* Gunakan auto untuk centering */
+            margin: 0 auto;
             background: #fff;
             padding: 10px;
             border-radius: 10px;
@@ -33,7 +33,7 @@
             height: 300px; /* HEIGHT DITENTUKAN DI SINI */
             margin: 20px auto;
         }
-        
+
         h2 {
             color: white;
             background-color: purple;
@@ -56,17 +56,32 @@
             background: #f1f1f1;
             border-radius: 8px;
             margin-bottom: 10px;
-            justify-content: flex-start; /* Mengatur item dari kiri */
+            justify-content: flex-start;
+        }
+        #branch-checkboxes {
+            text-align: left; 
+            padding: 10px 0; 
+            border-top: 1px solid #ddd; 
+            margin-top: 10px;
+            width: 100%; /* Memastikan wadah checkbox penuh lebar */
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        #branch-checkboxes label {
+            margin-right: 20px;
+            font-size: 14px;
+            white-space: nowrap; /* Mencegah nama cabang terpotong */
         }
         input[type="text"], select {
-            width: auto; /* Mengubah dari 100% agar sesuai dengan flex */
+            width: auto;
             max-width: 300px;
             padding: 10px;
             margin: 5px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
             box-sizing: border-box;
-            flex-grow: 1; /* Memungkinkan elemen untuk tumbuh */
+            flex-grow: 1;
         }
         .reset-btn, .print-btn {
             color: white;
@@ -96,7 +111,7 @@
             background: #28a745;
             margin-top: 20px;
         }
-        
+
         /* Gaya Tabel */
         .table-container {
             overflow-x: auto;
@@ -117,21 +132,24 @@
             text-align: left;
             white-space: nowrap;
         }
-        table td:nth-child(n+3){ 
+        table td:nth-child(n+3){
             text-align: center;
         }
         th {
             background-color: purple;
             color: white;
         }
-        
+
         /* Mobile Responsiveness Disederhanakan */
         @media (max-width: 768px) {
             .filter-container {
                 flex-direction: column;
             }
             input, select, .reset-btn, .back-btn, .print-btn {
-                width: 100%; /* Membuat filter dan tombol penuh lebar di mobile */
+                width: 100%;
+            }
+            #branch-checkboxes {
+                text-align: center;
             }
         }
     </style>
@@ -141,7 +159,7 @@
     <div class="container">
         <h2>M-Activity Performance Region Sumatera on December 2025</h2>
         <div id="chart-container">
-            <canvas id="myBarChart"></canvas>            
+            <canvas id="myBarChart"></canvas>
         </div>
 
         <div class="filter-container">
@@ -156,6 +174,8 @@
             <h3><p id="time-date"></p></h3>
         </div>
 
+        <div id="branch-checkboxes">
+            </div>
         <div class="table-container">
             <table id="dataTable">
                 <thead>
@@ -163,40 +183,41 @@
                 </thead>
                 <tbody id="tableBody"></tbody>
             </table>
-        </div>    
-    <br>    
+        </div>
+    <br>
     </div>
-    
+
     <button class="print-btn" onclick="printTable()">Print / Save PDF</button>
-
-
-</body>
-</html>
 
 <script>
 // app.js
 const ChartDataLabels = window.ChartDataLabels;
-// GANTI 'nama-repo-anda' dengan nama repositori Anda. JANGAN GUNAKAN SLASH DIAKHIR.
 const REPO_NAME = 'm-activity';
 const BASE_PATH = './';
 let myChart = null;
 let tableData = [];
-let allOffices = new Set(); // Tambahkan variabel global untuk menyimpan semua Office unik
-let allBranches = new Set(); // Tambahkan variabel global untuk menyimpan semua Main Branch unik
-    
+let allOffices = new Set();
+let allBranches = new Set();
+// VARIABEL BARU UNTUK MELACAK CABANG YANG DICENTANG DI CHART
+let selectedBranchesForChart = new Set();
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Asumsi: Dataset.json ada di path yang sama
     fetch('Dataset.json')
         .then(response => {
             if (!response.ok) {
-                throw new Error('Gagal memuat Dataset.json.');
+                throw new Error('Gagal memuat Dataset.json. Pastikan file ada.');
             }
             return response.json();
         })
         .then(data => {
             populateTable(data);
-            // Panggil inisialisasi di sini HANYA jika berhasil dimuat
+            // Inisialisasi Checkbox setelah data dimuat
+            populateBranchCheckboxes(); 
+            
+            // Inisialisasi filter dan chart
             filterAndSearchTable();
-            // 2. Tambahkan event listener sekarang, setelah data siap
+
             document.getElementById('BranchFilter').addEventListener('change', function() {
                 updateOfficeFilter(this.value);
             });
@@ -206,21 +227,18 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
-            // Jika GAGAL, panggil drawChart secara langsung dengan data kosong/error.
-            // JANGAN panggil filterAndSearchTable.
             drawChart({ labels: ['Gagal Memuat Data'], values: [0] });
         });
         
-    updateTimeDate(); 
-    setInterval(updateTimeDate, 1000); 
-    
+    updateTimeDate();
+    setInterval(updateTimeDate, 1000);
 });
 
 function updateTimeDate() {
-            const now = new Date();
-            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
-            const date = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-            document.getElementById("time-date").innerHTML = `${date} | ${time}`;
+    const now = new Date();
+    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
+    const date = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+    document.getElementById("time-date").innerHTML = `${date} | ${time}`;
 }
     
 function sortDataByValue(data, sortOrder = 'desc') {
@@ -246,55 +264,34 @@ function getRandomColor(alpha = 1) {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function parseCSV(text) {
-    const rows = text.split('\n').filter(row => row.trim() !== '');
-    const labels = [];
-    const values = [];
-
-    for (let i = 1; i < rows.length; i++) {
-        const columns = rows[i].split(';');
-        if (columns.length >= 2) {
-            const label = columns[0].trim();
-            const value = parseFloat(columns[1].trim());
-
-            if (label && !isNaN(value)) {
-                labels.push(label);
-                values.push(value);
-            }
-        }
-    }
-    return { labels, values };
-}
-
 function drawChart(data) {
-    console.log("Data yang diterima oleh drawChart:", data); // TAMBAH INI
-    
-    // PERIKSA: Apakah data.labels dan data.values ada dan tidak kosong?
     if (!data || data.labels.length === 0) {
-        console.warn("Chart tidak digambar karena data kosong atau tidak valid.");
-        // Opsional: Tampilkan pesan di canvas
-        const ctx = document.getElementById('myBarChart').getContext('2d');
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        return; 
-    }    
-    const ctx = document.getElementById('myBarChart').getContext('2d');
-    const backgroundColors = data.labels.map(label => {
-    if (label.startsWith('TOTAL -')) {
-            // Warna khusus untuk Total Branch
-            return 'rgba(78, 51, 126, 0.9)'; // Ungu/Purple yang lebih solid
+        if (myChart) myChart.destroy();
+        // Bersihkan canvas secara eksplisit jika tidak ada data
+        const canvas = document.getElementById('myBarChart');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
-        // Warna default atau acak untuk Office
-        return getRandomColor(0.7); 
-    });
+        return; 
+    }
+    const ctx = document.getElementById('myBarChart').getContext('2d');
+    
     if (myChart) {
         myChart.destroy();
     }
     
-    // Warna statis untuk chart line
     const staticColors = [
         'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)',
         'rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)'
     ];
+
+    const backgroundColors = data.labels.map((label, index) => {
+        if (label.startsWith('TOTAL')) {
+            return 'rgba(78, 51, 126, 0.9)'; 
+        }
+        return staticColors[index % staticColors.length];
+    });
 
     myChart = new Chart(ctx, {
         type: 'bar',
@@ -304,8 +301,8 @@ function drawChart(data) {
             datasets: [{
                 label: 'Office Activity',
                 data: data.values,
-                backgroundColor: staticColors,
-                borderColor: staticColors.map(c => c.replace('0.8', '1')),
+                backgroundColor: backgroundColors,
+                borderColor: backgroundColors.map(c => c.replace('0.8', '1')),
                 borderWidth: 1
             }]
         },
@@ -329,33 +326,64 @@ function drawChart(data) {
     });
 }
 
+// FUNGSI BARU: MEMBUAT CHECKBOX UNTUK SETIAP MAIN BRANCH
+function populateBranchCheckboxes() {
+    const checkboxContainer = document.getElementById('branch-checkboxes');
+    checkboxContainer.innerHTML = '<strong>Tampilkan Cabang di Chart:</strong> ';
+
+    selectedBranchesForChart.clear();
+    
+    const sortedBranches = Array.from(allBranches).sort();
+
+    sortedBranches.forEach(branch => {
+        selectedBranchesForChart.add(branch); 
+        
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        
+        checkbox.type = 'checkbox';
+        checkbox.value = branch;
+        checkbox.checked = true;
+        checkbox.style.marginRight = '5px';
+        checkbox.onchange = handleBranchCheckboxChange;
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(branch));
+        checkboxContainer.appendChild(label);
+    });
+}
+
+// FUNGSI BARU: MENGELOLA PERUBAHAN CHECKBOX
+function handleBranchCheckboxChange(event) {
+    const branch = event.target.value;
+    if (event.target.checked) {
+        selectedBranchesForChart.add(branch);
+    } else {
+        selectedBranchesForChart.delete(branch);
+    }
+    filterAndSearchTable();
+}
+
 function updateOfficeFilter(selectedBranch) {
     const OfficeFilter = document.getElementById('OfficeFilter');
     
-    // 1. Reset Office Filter
     OfficeFilter.innerHTML = '<option value="">Office</option>'; 
     
-    // Jika filter Branch direset (dipilih "Main Branch" yang nilainya ""), 
-    // Office akan diisi semua opsi dan chart akan menampilkan semua Main Branch (Poin 1).
     if (selectedBranch === "") {
         updateFilterOptions(OfficeFilter, allOffices, 'Office');
     } else {
-        // 2. Saring data untuk mendapatkan Office yang relevan (Poin 2)
         let relevantOffices = new Set();
         tableData.forEach(row => {
             if (String(row['Main Branch']).toLowerCase() === selectedBranch.toLowerCase()) {
                 relevantOffices.add(row['Office']);
             }
         });
-        
-        // 3. Update dropdown Office
         updateFilterOptions(OfficeFilter, relevantOffices, 'Office');
     }
 
-    // Panggil filterAndSearchTable untuk menyaring tabel dan chart dengan kombinasi filter baru
     filterAndSearchTable();
 }
-    
+
 function populateTable(data) {
     const tableHead = document.getElementById('tableHead');
     const tableBody = document.getElementById('tableBody');
@@ -366,12 +394,11 @@ function populateTable(data) {
     tableBody.innerHTML = '';
     tableData = Array.isArray(data) ? data : [];
 
-    // Reset Sets global
     allOffices.clear();
     allBranches.clear();
 
     if (tableData.length > 0) {
-        // ... (Kode untuk membuat header tabel) ...
+        // Membuat header tabel
         Object.keys(data[0]).forEach(header => {
             let th = document.createElement('th');
             th.textContent = header;
@@ -379,7 +406,7 @@ function populateTable(data) {
         });
 
         data.forEach(row => {
-            // ... (Kode untuk membuat baris tabel) ...
+            // Membuat baris tabel dan mengisi Set filter
             let tr = document.createElement('tr');
             Object.values(row).forEach(cell => {
                 let td = document.createElement('td');
@@ -388,21 +415,18 @@ function populateTable(data) {
             });
             tableBody.appendChild(tr);
             
-            // Isi Set global
             allOffices.add(row['Office']);
             allBranches.add(row['Main Branch']);
         });
 
-        // Update opsi filter menggunakan Set global
         updateFilterOptions(OfficeFilter, allOffices, 'Office');
         updateFilterOptions(BranchFilter, allBranches, 'Main Branch');
     }
 }
 
-// FUNGSI UPDATE FILTER OPTIONS (Tidak berubah, tetapi menggunakan Set global sekarang)
 function updateFilterOptions(filterElement, values, defaultText) {
     filterElement.innerHTML = `<option value="">${defaultText}</option>`;
-    const sortedValues = Array.from(values).sort(); // Sortir secara alfabetis agar rapi
+    const sortedValues = Array.from(values).sort();
     sortedValues.forEach(value => {
         let option = document.createElement('option');
         option.value = value;
@@ -411,20 +435,10 @@ function updateFilterOptions(filterElement, values, defaultText) {
     });
 }
 
-// app.js (MODIFIKASI PENTING PADA BAGIAN CHART)
-
-// app.js (MODIFIKASI PENTING)
-
-    
 function filterAndSearchTable() {
-    // ... (Pengecekan Keamanan dan Deklarasi di awal) ...
-// BARIS PENTING: Pengecekan data yang ketat.
-    // Jika tableData belum terisi, HENTIKAN eksekusi.
     if (!Array.isArray(tableData) || tableData.length === 0) {
-        console.warn("Filtering dibatalkan: tableData tidak valid atau kosong.");
-        // Pastikan chart tetap dimuat dengan data kosong untuk menghindari error di HTML.
-        drawChart({ labels: [], values: [] }); 
-        return; 
+        drawChart({ labels: [], values: [] });
+        return;
     }
     const OfficeFilterElement = document.getElementById('OfficeFilter');
     const BranchFilterElement = document.getElementById('BranchFilter');
@@ -432,127 +446,92 @@ function filterAndSearchTable() {
     const OfficeValue = OfficeFilterElement.value.toLowerCase();
     const BranchValue = BranchFilterElement.value.toLowerCase();
     const COLUMN_TO_TOTAL = 'Total';
-
     
-    // --- Langkah 1: Penyaringan Dasar Data ---
+    const branchesForChart = Array.from(selectedBranchesForChart).map(b => b.toLowerCase());
+
+    // --- Langkah 1: Penyaringan Dasar Data (untuk Tabel dan Chart) ---
     const filteredData = tableData.filter(row => {
-    const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
-    const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
-    return BranchMatch && OfficeMatch; // <-- Logika filter harus ada di sini!
+        const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
+        const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
+        return BranchMatch && OfficeMatch;
     });
 
     // --- Langkah 2: Logika Pengelompokan Chart ---
-    
-    const chartTotals = new Map();
     let chartLabels = [];
     let chartValues = [];
-    let groupingKey = 'Office'; // <<< INI PERUBAHAN UTAMA: Default ke Office >>>
-
-    const chartDataArray = Array.from(chartTotals.entries()); // Mengubah Map menjadi Array pasangan [Label, Value]
     
-    // Filter data, hanya menyimpan yang nilainya > 0
-    const filteredChartData = chartDataArray.filter(([label, value]) => {
-        // Pastikan nilai Total Branch (yang dimulai dengan 'TOTAL') selalu ditampilkan,
-        // asalkan totalnya > 0, untuk mode detail (Skenario 2).
-        if (label.startsWith('TOTAL')) {
-            return value > 0;
-        }
-        // Untuk Office biasa, pastikan nilainya > 0
-        return value > 0;
-    });
-
-    // ------------------------------------------------------------------
-    // KONDISI PENENTUAN GROUPING KEY UNTUK SEMUA SKENARIO
-    // ------------------------------------------------------------------
-    
-    // Jika Branch dipilih spesifik (Skenario 2), kita menggunakan groupingKey='Office' 
-    // tetapi logika perhitungannya akan berbeda (mode detail).
-    
-    // Jika Office spesifik dipilih (Skenario 4), groupingKey tetap 'Office'.
-    if (OfficeValue !== "") {
-        groupingKey = 'Office';
-    } 
-    
-    // Jika kedua filter kosong, groupingKey sudah disetel ke 'Office' (Skenario 3/Default baru)
-    // Jika BranchValue tidak kosong dan OfficeValue kosong, kita masuk Skenario 2 (detail)
-    
-    // ------------------------------------------------------------------
-    // SKENARIO 2: Branch spesifik dipilih, Office (All) dipilih (Mode Detail Branch)
-    // ------------------------------------------------------------------
+    // Skenario 2: Branch spesifik dipilih & Office "All" (Mode Detail Office di bawah Branch)
     if (BranchValue !== "" && OfficeValue === "") {
-        
+        const chartTotals = new Map();
         let totalBranchActivity = 0;
         
-        // Hitung total per Office di bawah Branch spesifik
         filteredData.forEach(row => {
             const officeName = row['Office'];
             const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
             
             const currentOfficeTotal = chartTotals.get(officeName) || 0;
             chartTotals.set(officeName, currentOfficeTotal + activityValue);
-
             totalBranchActivity += activityValue;
         });
 
-        // Susun Labels Poin 2 (TOTAL Branch + Offices)
         const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
         chartTotals.set(totalLabel, totalBranchActivity);
         
         const officeLabels = Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL'));
         chartLabels = [totalLabel].concat(officeLabels);
         chartValues = chartLabels.map(label => chartTotals.get(label));
-                
-        // Kita lompat ke Langkah 3 karena chartLabels sudah terisi
         
     } else {
-        // ----------------------------------------------------
-        // LOGIKA PENGELOMPOKAN DEFAULT (Skenario 1, 3, dan 4)
-        // ----------------------------------------------------
+        // Skenario 1 (Branch All, Office All) atau Skenario 4 (Office Spesifik)
+        // Kita hitung total Main Branch yang lolos filter DROPDOWN DAN CHECKBOX
         
-        // Skenario 1/3 (Branch All, Office All) dan Skenario 4 (Office Spesifik)
-        // Keduanya sekarang menggunakan groupingKey = 'Office'
-        
-        filteredData.forEach(row => {
-            const groupKey = row[groupingKey]; 
-            const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0; 
+        const branchTotalsForChart = new Map(); 
+
+        tableData.forEach(row => {
+            const branchName = row['Main Branch'];
+            const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
             
-            const currentTotal = chartTotals.get(groupKey) || 0;
-            chartTotals.set(groupKey, currentTotal + activityValue);
+            const isChecked = branchesForChart.includes(branchName.toLowerCase());
+            
+            const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
+            const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
+
+            // Baris data harus lolos filter Dropdown DAN harus dicentang di Checkbox
+            if (isChecked && BranchMatch && OfficeMatch) {
+                 const currentTotal = branchTotalsForChart.get(branchName) || 0;
+                 branchTotalsForChart.set(branchName, currentTotal + activityValue);
+            }
         });
         
-        chartLabels = Array.from(chartTotals.keys()); 
-        chartValues = Array.from(chartTotals.values());
-        
-        // KHUSUS SKENARIO 1 (Jika pengguna benar-benar ingin melihat Main Branch)
-        if (BranchValue === "" && OfficeValue === "" && BranchFilterElement.value === "") {
-             // Jika kedua filter kosong dan pengguna belum menyentuh filter Office, 
-             // kita kembali ke pengelompokan Main Branch.
-             
-             // PERHATIAN: Logika ini bergantung pada bagaimana filter disajikan. 
-             // Untuk memenuhi permintaan "default tampilkan total semua Office", 
-             // kita TIDAK PERLU lagi memproses Main Branch di sini.
-        }
+        chartLabels = Array.from(branchTotalsForChart.keys());
+        chartValues = Array.from(branchTotalsForChart.values());
     }
 
     // --- Langkah 3: Gambar Ulang Chart ---
-    
     if (chartLabels.length === 0) {
-         drawChart({ labels: [], values: [] });
+        drawChart({ labels: [], values: [] });
     } else {
         const chartDataResult = { labels: chartLabels, values: chartValues };
         
         let sortedChartData = chartDataResult;
-        // Hanya sortir jika BUKAN mode detail (Poin 2)
+        
+        // Hanya sortir dan filter nilai > 0 jika BUKAN mode detail
         if (!(BranchValue !== "" && OfficeValue === "")) {
-            sortedChartData = sortDataByValue(chartDataResult, 'desc'); 
+            const filteredChartData = chartDataResult.labels.map((label, index) => ({
+                label: label,
+                value: chartDataResult.values[index]
+            })).filter(item => item.value > 0);
+            
+            const labelsNoZero = filteredChartData.map(item => item.label);
+            const valuesNoZero = filteredChartData.map(item => item.value);
+
+            sortedChartData = sortDataByValue({ labels: labelsNoZero, values: valuesNoZero }, 'desc');
         }
 
-        
-        drawChart(sortedChartData); 
+        drawChart(sortedChartData);
     }
 
     // --- Langkah 4: Perbarui Tampilan Tabel ---
-    // Logika ini memastikan tabel juga diperbarui.
     tableBody.innerHTML = '';
     filteredData.forEach(row => {
         let tr = document.createElement('tr');
@@ -565,15 +544,16 @@ function filterAndSearchTable() {
     });
 }
 
-// FUNGSI FILTERANDSEARCHTABLE (Tidak perlu diubah, karena sudah dipanggil oleh updateOfficeFilter)
-// ... (Biarkan fungsi filterAndSearchTable tetap sama) ...
-
-// FUNGSI RESETFILTER (Diperbarui untuk memanggil updateOfficeFilter saat direset)
 function resetFilter() {
     document.getElementById('OfficeFilter').value = "";
     document.getElementById('BranchFilter').value = "";
     
-    // Panggil updateOfficeFilter dengan nilai kosong untuk mengembalikan semua opsi Office
+    // Reset checkbox (semua dicentang)
+    document.querySelectorAll('#branch-checkboxes input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = true;
+        selectedBranchesForChart.add(checkbox.value); 
+    });
+    
     updateOfficeFilter("");
     filterAndSearchTable(); 
 }
@@ -582,16 +562,23 @@ function printTable() {
     let tableContent = document.getElementById("dataTable").outerHTML;
     let originalContent = document.body.innerHTML;
 
-    document.body.innerHTML = tableContent;
+    // Sembunyikan tombol saat mencetak
+    document.body.innerHTML = `
+        <style>
+            .print-btn, .filter-container, #branch-checkboxes { display: none; }
+            h2, h3 { display: block; text-align: center; }
+        </style>
+        ${document.getElementById("dataTable").outerHTML}
+    `;
     window.print();
+    // Kembalikan konten asli
     document.body.innerHTML = originalContent;
+    // Reload filter/chart jika diperlukan setelah print (opsional, tapi lebih aman)
+    document.addEventListener('DOMContentLoaded', filterAndSearchTable); 
 }
 function openPage() {
     window.location.href = 'https://bmi-apps.github.io/regionsumatera/';
 }
 </script>
-
-
-
-
-
+</body>
+</html>
