@@ -278,7 +278,7 @@ function drawChart(data) {
 
     myChart = new Chart(ctx, {
         type: 'bar',
-        plugins: [ChartDataLabels],
+        plugins: [ChartDataLabels], // HANYA ChartDataLabels
         data: {
             labels: data.labels,
             datasets: [{
@@ -310,7 +310,7 @@ function drawChart(data) {
                     padding: 0, 
                     
                     ticks: { 
-                        display: true, // Kembali ke display true
+                        display: true, 
                         mirror: false,
                         
                         align: 'center', 
