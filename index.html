@@ -175,7 +175,7 @@
         </div>
 
         <div id="activity-checkboxes">
-            <strong>Pilihan Tampilan Chart (Berdasarkan Office):</strong> 
+            <strong>Pilihan Tampilan Chart (Filter Office):</strong> 
             <label>
                 <input type="checkbox" id="active-branch-checkbox" value="active" checked onchange="filterAndSearchTable()"> Office Ada Aktivitas
             </label>
@@ -259,13 +259,6 @@ function sortDataByValue(data, sortOrder = 'desc') {
     const sortedValues = pairedData.map(item => item.value);
 
     return { labels: sortedLabels, values: sortedValues };
-}
-
-function getRandomColor(alpha = 1) {
-    const r = Math.floor(Math.random() * 255);
-    const g = Math.floor(Math.random() * 255);
-    const b = Math.floor(Math.random() * 255);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function drawChart(data) {
@@ -425,7 +418,6 @@ function filterAndSearchTable() {
 
     const OfficeValue = OfficeFilterElement.value.toLowerCase();
     const BranchValue = BranchFilterElement.value.toLowerCase();
-    const COLUMN_TO_TOTAL = 'Total';
     
     // Ambil status checkbox aktivitas
     const showActive = document.getElementById('active-branch-checkbox').checked;
@@ -442,96 +434,61 @@ function filterAndSearchTable() {
     // --- Langkah 2: Logika Pengelompokan Chart ---
     let chartLabels = [];
     let chartValues = [];
+    
+    let isDefaultView = (BranchValue === "" && OfficeValue === "");
 
-    // Jika filter Branch atau Office dipilih spesifik (Mode Detail)
-    if (BranchValue !== "" || OfficeValue !== "") {
-        // Dalam mode detail, chart harus menampilkan Office (jika Branch dipilih) 
-        // atau hanya Office spesifik (jika Office dipilih). Checkbox diabaikan.
-
-        const chartTotals = new Map();
-        let totalActivity = 0;
-
-        // Jika Office spesifik dipilih, kita hanya tampilkan itu saja
-        if (OfficeValue !== "") {
-            // Tampilkan Office spesifik (checkbox diabaikan)
-            const officeTotal = officeActivityTotals.get(OfficeValue) || 0;
-            chartTotals.set(OfficeValue, officeTotal);
-            totalActivity = officeTotal;
-        } else {
-            // Jika hanya Branch yang dipilih, tampilkan semua Office di Branch tersebut
-            filteredData.forEach(row => {
-                const officeName = row['Office'];
-                const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
-                
-                const currentOfficeTotal = chartTotals.get(officeName) || 0;
-                chartTotals.set(officeName, currentOfficeTotal + activityValue);
-                totalActivity += activityValue;
-            });
-            
-            // Tambahkan bar TOTAL hanya jika Branch dipilih (Office tidak)
-            if (BranchValue !== "") {
-                const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
-                const allOfficeTotalsInBranch = Array.from(officeActivityTotals.keys())
-                    .filter(office => filteredData.some(row => row['Office'] === office))
-                    .reduce((sum, office) => sum + (officeActivityTotals.get(office) || 0), 0);
-                
-                chartTotals.set(totalLabel, allOfficeTotalsInBranch);
-            }
-        }
+    if (isDefaultView) {
+        // SKENARIO BARU/DEFAULT: Branch ALL, Office ALL. Tampilkan Office dan terapkan Checkbox
         
-        const officeLabels = Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL'));
-        
-        // Atur urutan: [TOTAL, Office1, Office2, ...]
-        if (BranchValue !== "" && OfficeValue === "") {
-             chartLabels = [`TOTAL ${BranchValue.toUpperCase()}`].concat(officeLabels);
-        } else {
-             chartLabels = officeLabels;
-        }
-        
-        chartValues = chartLabels.map(label => chartTotals.get(label) || 0);
+        const officesToChart = new Map();
 
-
-    } else {
-        // Skenario Default: Filter ALL ALL. Tampilkan Total per Main Branch.
-        // Checkbox AKTIVITAS OFFICE mempengaruhi Main Branch mana yang ditampilkan.
-        
-        const branchesToChart = new Map(); 
-
-        // 1. Tentukan Office mana saja yang akan dimasukkan berdasarkan checkbox
-        const OfficesToInclude = new Set();
         officeActivityTotals.forEach((total, officeName) => {
             const isActive = total > 0;
             const includeByCheckbox = (showActive && isActive) || (showInactive && !isActive);
+
             if (includeByCheckbox) {
-                OfficesToInclude.add(officeName);
+                 officesToChart.set(officeName, total);
             }
         });
         
-        // 2. Kelompokkan Office yang lolos checkbox ke Main Branch-nya
+        chartLabels = Array.from(officesToChart.keys());
+        chartValues = Array.from(officesToChart.values());
+
+    } else if (BranchValue !== "" && OfficeValue === "") {
+        // SKENARIO 2: Branch Spesifik dipilih. Tampilkan Office di Branch tersebut
+        // Checkbox diabaikan karena ini mode detail
+        
+        const chartTotals = new Map();
+        
+        // Kumpulkan semua Office dalam Branch yang dipilih
         tableData.forEach(row => {
-            const branchName = row['Main Branch'];
-            const officeName = row['Office'];
-            const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
-
-            if (OfficesToInclude.has(officeName)) {
-                // Akumulasikan total Branch hanya dari Office yang lolos filter checkbox
-                const currentTotal = branchesToChart.get(branchName) || 0;
-                branchesToChart.set(branchName, currentTotal + activityValue);
+            if (String(row['Main Branch']).toLowerCase() === BranchValue) {
+                const officeName = row['Office'];
+                // Ambil total yang sudah dihitung sebelumnya di officeActivityTotals
+                const total = officeActivityTotals.get(officeName) || 0;
+                chartTotals.set(officeName, total);
             }
         });
 
-        // Hapus Branch yang totalnya menjadi 0 setelah filtering Office (kecuali jika showInactive true)
-        if (!showActive || !showInactive) {
-            branchesToChart.forEach((total, branchName) => {
-                if (total === 0 && !showInactive) {
-                    branchesToChart.delete(branchName);
-                }
-            });
-        }
+        // Tambahkan bar TOTAL
+        const totalBranchActivity = Array.from(chartTotals.values()).reduce((sum, val) => sum + val, 0);
+        const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
+        chartTotals.set(totalLabel, totalBranchActivity);
+
+        const officeLabels = Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL'));
         
-        chartLabels = Array.from(branchesToChart.keys());
-        chartValues = Array.from(branchesToChart.values());
+        // Atur urutan: [TOTAL, Office1, Office2, ...]
+        chartLabels = [totalLabel].concat(officeLabels);
+        chartValues = chartLabels.map(label => chartTotals.get(label) || 0);
+        
+    } else if (OfficeValue !== "") {
+        // SKENARIO 3: Office Spesifik dipilih. Tampilkan Office itu saja.
+        // Checkbox diabaikan
+        const officeTotal = officeActivityTotals.get(OfficeValue) || 0;
+        chartLabels = [OfficeValue];
+        chartValues = [officeTotal];
     }
+
 
     // --- Langkah 3: Gambar Ulang Chart (dengan Sorting) ---
     if (chartLabels.length === 0) {
@@ -540,29 +497,9 @@ function filterAndSearchTable() {
         const chartDataResult = { labels: chartLabels, values: chartValues };
         let sortedChartData = chartDataResult;
         
-        // Sorting hanya dilakukan pada mode total Main Branch
-        if (BranchValue === "" && OfficeValue === "") {
-            const chartDataArray = chartDataResult.labels.map((label, index) => ({
-                label: label,
-                value: chartDataResult.values[index]
-            }));
-
-            const activeData = chartDataArray.filter(item => item.value > 0);
-            const inactiveData = chartDataArray.filter(item => item.value === 0);
-
-            // Sorting data aktif secara descending
-            const sortedActive = sortDataByValue({
-                labels: activeData.map(d => d.label),
-                values: activeData.map(d => d.value)
-            }, 'desc');
-
-            // Gabungkan: Aktif (diurutkan) + Tidak Aktif (tidak diurutkan)
-            sortedChartData = {
-                labels: sortedActive.labels.concat(inactiveData.map(d => d.label)),
-                values: sortedActive.values.concat(inactiveData.map(d => d.value))
-            };
-        } else if (BranchValue !== "" && OfficeValue === "") {
-             // Sorting Mode Detail Office (total di atas, Office lainnya diurutkan)
+        // Sorting hanya dilakukan pada mode yang menampilkan daftar Office (Default View & Branch Spesifik)
+        if (isDefaultView || (BranchValue !== "" && OfficeValue === "")) {
+            
             const chartDataArray = chartDataResult.labels.map((label, index) => ({
                 label: label,
                 value: chartDataResult.values[index]
@@ -571,14 +508,23 @@ function filterAndSearchTable() {
             const totalItem = chartDataArray.find(item => item.label.startsWith('TOTAL'));
             const officeItems = chartDataArray.filter(item => !item.label.startsWith('TOTAL'));
 
-            const sortedOffice = sortDataByValue({
-                labels: officeItems.map(d => d.label),
-                values: officeItems.map(d => d.value)
+            const activeData = officeItems.filter(item => item.value > 0);
+            const inactiveData = officeItems.filter(item => item.value === 0);
+
+            // Sorting data aktif secara descending
+            const sortedActive = sortDataByValue({
+                labels: activeData.map(d => d.label),
+                values: activeData.map(d => d.value)
             }, 'desc');
 
+            // Gabungkan: Aktif (diurutkan) + Tidak Aktif (tidak diurutkan)
+            const finalLabels = sortedActive.labels.concat(inactiveData.map(d => d.label));
+            const finalValues = sortedActive.values.concat(inactiveData.map(d => d.value));
+            
+            // Tambahkan TOTAL di paling depan jika ada
             sortedChartData = {
-                labels: totalItem ? [totalItem.label].concat(sortedOffice.labels) : sortedOffice.labels,
-                values: totalItem ? [totalItem.value].concat(sortedOffice.values) : sortedOffice.values,
+                labels: totalItem ? [totalItem.label].concat(finalLabels) : finalLabels,
+                values: totalItem ? [totalItem.value].concat(finalValues) : finalValues,
             };
         }
 
