@@ -154,16 +154,16 @@
                 <option value="">Office</option>
             </select>
             <select id="ActivityStatusFilter">
-                <option value="all">Activity</option>
-                <option value="active">Full</option>
-                <option value="inactive">Zero</option>
+                <option value="all">Status Aktivitas (Semua)</option>
+                <option value="active">Office Ada Aktivitas</option>
+                <option value="inactive">Office Tidak Ada Aktivitas</option>
             </select>
             
             <button class="reset-btn" onclick="resetFilter()">Reset</button>
             <button class="back-btn" onclick="openPage()">Back</button>
             <h3><p id="time-date"></p></h3>
         </div>
-
+        
         <div class="table-container">
             <table id="dataTable">
                 <thead>
@@ -204,7 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Event Listeners untuk Dropdown
             document.getElementById('BranchFilter').addEventListener('change', filterAndSearchTable);
             document.getElementById('OfficeFilter').addEventListener('change', filterAndSearchTable);
-            // Tambahkan listener untuk dropdown Status Aktivitas
             document.getElementById('ActivityStatusFilter').addEventListener('change', filterAndSearchTable);
 
         })
@@ -265,15 +264,12 @@ function drawChart(data) {
         if (label.startsWith('TOTAL')) {
             return 'rgba(78, 51, 126, 0.9)'; 
         }
-        // Warna khusus untuk Office Tidak Ada Aktivitas (jika 0)
         if (data.values[index] === 0) {
             return 'rgba(150, 150, 150, 0.7)'; // Abu-abu
         }
-        // Warna untuk Office aktif
         return staticColors[index % staticColors.length];
     });
 
-    // **Perhitungan Suggested Max yang Lebih Aman dan Besar (untuk Datalabels di luar bar)**
     const maxVal = data.values.length > 0 ? Math.max(...data.values) : 10;
     const suggestedMax = maxVal * 1.25; 
 
@@ -294,7 +290,6 @@ function drawChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            // PENTING: Mengatur indexAxis ke 'y' membuat Bar Horizontal
             indexAxis: 'y', 
             scales: {
                 x: { 
@@ -302,14 +297,15 @@ function drawChart(data) {
                     suggestedMax: suggestedMax, 
                     grid: { display: false }, 
                     border: { display: false }, 
-                    // **PENTING: Hilangkan nilai/angka pada sumbu X**
                     ticks: { display: false } 
                 },
                 y: { 
                     beginAtZero: true, 
                     grid: { display: true },
                     border: { display: true }, 
-                    ticks: { display: true, mirror: false } 
+                    ticks: { display: true, mirror: false },
+                    // **PERBAIKAN: Memastikan label berada di tengah bar**
+                    offset: true, 
                 }
             },
             plugins: {
@@ -317,8 +313,8 @@ function drawChart(data) {
                     color: '#000',
                     font: { weight: 'normal' },
                     anchor: 'end',
-                    align: 'end',   // Pindah label ke luar bar (kanan)
-                    offset: 4,      // Tambahkan sedikit offset agar tidak terlalu menempel
+                    align: 'end',   
+                    offset: 4,      
                     formatter: (value) => value.toLocaleString()
                 },
             }
@@ -410,7 +406,6 @@ function filterAndSearchTable() {
     }
     const OfficeFilterElement = document.getElementById('OfficeFilter');
     const BranchFilterElement = document.getElementById('BranchFilter');
-    // **PERUBAHAN: Ambil nilai dari dropdown Status Aktivitas**
     const ActivityStatusFilterElement = document.getElementById('ActivityStatusFilter');
 
     const OfficeValue = OfficeFilterElement.value.toLowerCase();
@@ -431,10 +426,8 @@ function filterAndSearchTable() {
     let isDefaultView = (BranchValue === "" && OfficeValue === "");
 
     if (isDefaultView || (BranchValue !== "" && OfficeValue === "")) {
-        // SKENARIO 1 & 2: Branch ALL atau Branch Spesifik, Office ALL. Tampilkan Office dan terapkan filter Status
         const officesToChart = new Map();
         
-        // Menentukan set Office yang relevan (semua atau di Branch tertentu)
         const relevantOffices = new Set();
         if (BranchValue === "") {
             allOffices.forEach(office => relevantOffices.add(office));
@@ -451,7 +444,6 @@ function filterAndSearchTable() {
             const isActive = total > 0;
             let includeByStatus = false;
 
-            // **LOGIC BARU UNTUK DROPDOWN STATUS**
             if (ActivityStatusValue === 'all') {
                 includeByStatus = true;
             } else if (ActivityStatusValue === 'active' && isActive) {
@@ -468,18 +460,15 @@ function filterAndSearchTable() {
         chartLabels = Array.from(officesToChart.keys());
         chartValues = Array.from(officesToChart.values());
         
-        // Tambahkan TOTAL jika Branch Spesifik dipilih (SKENARIO 2)
         if (BranchValue !== "") {
             const totalBranchActivity = Array.from(chartValues).reduce((sum, val) => sum + val, 0);
             const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
             
-            // Atur urutan: [TOTAL, Office1, Office2, ...]
             chartLabels = [totalLabel].concat(chartLabels);
             chartValues = [totalBranchActivity].concat(chartValues);
         }
 
     } else if (OfficeValue !== "") {
-        // SKENARIO 3: Office Spesifik dipilih. Tampilkan Office itu saja (Status filter diabaikan)
         const officeTotal = officeActivityTotals.get(OfficeValue) || 0;
         chartLabels = [OfficeValue];
         chartValues = [officeTotal];
@@ -493,7 +482,6 @@ function filterAndSearchTable() {
         const chartDataResult = { labels: chartLabels, values: chartValues };
         let sortedChartData = chartDataResult;
         
-        // Sorting (Hanya terapkan sorting jika bukan tampilan office spesifik)
         if (OfficeValue === "") {
             
             const chartDataArray = chartDataResult.labels.map((label, index) => ({
@@ -507,17 +495,14 @@ function filterAndSearchTable() {
             const activeData = officeItems.filter(item => item.value > 0);
             const inactiveData = officeItems.filter(item => item.value === 0);
 
-            // Sorting data aktif secara descending
             const sortedActive = sortDataByValue({
                 labels: activeData.map(d => d.label),
                 values: activeData.map(d => d.value)
             }, 'desc');
 
-            // Gabungkan: Aktif (diurutkan) + Tidak Aktif (tidak diurutkan)
             const finalLabels = sortedActive.labels.concat(inactiveData.map(d => d.label));
             const finalValues = sortedActive.values.concat(inactiveData.map(d => d.value));
             
-            // Tambahkan TOTAL di paling depan jika ada
             sortedChartData = {
                 labels: totalItem ? [totalItem.label].concat(finalLabels) : finalLabels,
                 values: totalItem ? [totalItem.value].concat(finalValues) : finalValues,
@@ -543,7 +528,6 @@ function filterAndSearchTable() {
 function resetFilter() {
     document.getElementById('OfficeFilter').value = "";
     document.getElementById('BranchFilter').value = "";
-    // **PERUBAHAN: Reset dropdown status menjadi 'all'**
     document.getElementById('ActivityStatusFilter').value = "all";
     
     updateOfficeFilter("");
@@ -554,25 +538,21 @@ function printTable() {
     let tableContent = document.getElementById("dataTable").outerHTML;
     let originalContent = document.body.innerHTML;
 
-    // Sembunyikan elemen filter dan tombol saat mencetak
     document.body.innerHTML = `
         <style>
             .print-btn, .filter-container { display: none; }
             h2, h3 { display: block; text-align: center; }
-            table { font-size: 10px; } /* Atur font lebih kecil saat cetak */
+            table { font-size: 10px; }
         </style>
         ${document.getElementById("dataTable").outerHTML}
     `;
     window.print();
-    // Kembalikan konten asli
     document.body.innerHTML = originalContent;
     filterAndSearchTable(); 
 }
 function openPage() {
-    // Ganti dengan URL halaman utama Anda
     window.location.href = 'https://bmi-apps.github.io/regionsumatera/';
 }
 </script>
 </body>
 </html>
-
