@@ -306,13 +306,16 @@ function drawChart(data) {
                     grid: { display: true },
                     border: { display: true }, 
                     
-                    // KOREKSI PADDING INTERNAL
+                    // Padding internal sumbu
                     padding: { top: 5, bottom: 5 }, 
                     
                     ticks: { 
                         display: true, 
                         mirror: false,
-                        // **PENYESUAIAN FONT UNTUK KESEJAJARAN VERTIKAL**
+                        
+                        // **PENYESUAIAN PADDING KHUSUS PADA LABEL TICK**
+                        padding: 2, // Menambah sedikit ruang vertikal pada label itu sendiri
+                        
                         font: {
                             lineHeight: 1.1, 
                             size: 12 
