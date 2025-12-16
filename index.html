@@ -189,6 +189,38 @@ let allOffices = new Set();
 let allBranches = new Set();
 let officeActivityTotals = new Map(); 
 
+// *** CUSTOM PLUGIN UNTUK MEMAKSA KESEJAJARAN VERTIKAL ***
+const verticalAligner = {
+    id: 'verticalAligner',
+    afterDraw: (chart, args, options) => {
+        const ctx = chart.ctx;
+        const scaleY = chart.scales.y;
+        
+        // Ambil konfigurasi font dari skala Y asli
+        const fontOpts = scaleY.options.ticks.font;
+        ctx.font = `${fontOpts.style} ${fontOpts.size}px ${fontOpts.family}`;
+        ctx.fillStyle = fontOpts.color || 'black';
+        ctx.textAlign = 'right'; // Teks diletakkan di kanan (dekat sumbu Y)
+        ctx.textBaseline = 'middle'; // Mengatur titik Y adalah pusat vertikal teks
+
+        const pixelShift = options.yTickOffset || 0; // Ambil nilai pergeseran dari options
+
+        chart.data.labels.forEach((label, index) => {
+            const meta = chart.getDatasetMeta(0); 
+            const barElement = meta.data[index];
+
+            if (barElement) {
+                const xPos = scaleY.left; 
+                const yPos = barElement.y;
+
+                // Gambar label di posisi tengah bar, ditambah pergeseran manual
+                ctx.fillText(label, xPos - 5, yPos + pixelShift); 
+            }
+        });
+    }
+};
+
+
 document.addEventListener('DOMContentLoaded', function() {
     // Memuat data dari Dataset.json
     fetch('Dataset.json')
@@ -277,7 +309,8 @@ function drawChart(data) {
 
     myChart = new Chart(ctx, {
         type: 'bar',
-        plugins: [ChartDataLabels],
+        // Tambahkan kedua plugin
+        plugins: [ChartDataLabels, verticalAligner],
         data: {
             labels: data.labels,
             datasets: [{
@@ -292,6 +325,12 @@ function drawChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             indexAxis: 'y', // Chart Horizontal
+            
+            // Konfigurasi Plugin Custom
+            verticalAligner: {
+                yTickOffset: 1 // Coba pergeseran 1 piksel ke bawah (positif)
+            },
+            
             scales: {
                 x: { 
                     beginAtZero: true, 
@@ -308,19 +347,14 @@ function drawChart(data) {
                     padding: 0, 
                     
                     ticks: { 
-                        display: true, 
+                        display: false, // **Sembunyikan tick bawaan**
                         mirror: false,
-                        
-                        // **CUSTOM PIXEL SHIFT: Geser 2px ke bawah**
-                        textStrokeOffsetY: -1, 
-                        
-                        callback: function(value, index, values) {
-                            return this.getLabelForValue(value);
-                        },
                         
                         font: {
                             size: 14,
-                            lineHeight: 1.2
+                            lineHeight: 1.2,
+                            // Atur warna font agar bisa diambil oleh plugin
+                            color: 'black' 
                         }
                     },
                     offset: true, 
@@ -333,7 +367,7 @@ function drawChart(data) {
                     color: '#000',
                     font: { weight: 'normal' },
                     anchor: 'end',
-                    align: 'end',   // Pindah label ke luar bar (kanan)
+                    align: 'end',   
                     offset: 4,      
                     formatter: (value) => value.toLocaleString()
                 },
@@ -576,4 +610,3 @@ function openPage() {
 </script>
 </body>
 </html>
-
