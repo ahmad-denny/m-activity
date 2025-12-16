@@ -211,7 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
-            // Hanya log error, tidak double call drawChart
+            // Fallback draw chart jika data gagal dimuat
+            drawChart({ labels: ['Gagal Memuat Data'], values: [0] });
         });
         
     updateTimeDate();
@@ -253,7 +254,6 @@ function drawChart(data) {
     }
     const ctx = document.getElementById('myBarChart').getContext('2d');
     
-    // Pastikan myChart dihancurkan sebelum digambar ulang
     if (myChart) {
         myChart.destroy();
     }
@@ -295,15 +295,6 @@ function drawChart(data) {
             maintainAspectRatio: false,
             indexAxis: 'y', // Chart Horizontal
             
-            layout: {
-                padding: {
-                    left: 0,
-                    right: 40, // Padding untuk label datalables
-                    top: 10,
-                    bottom: 10
-                }
-            },
-
             scales: {
                 x: { 
                     beginAtZero: true, 
@@ -317,9 +308,7 @@ function drawChart(data) {
                     grid: { display: true },
                     border: { display: true }, 
                     
-                    offset: true, 
-                    categoryPercentage: 0.9, 
-                    barPercentage: 0.8, 
+                    padding: 0, 
                     
                     ticks: { 
                         display: true, 
@@ -327,19 +316,16 @@ function drawChart(data) {
                         
                         align: 'center', 
                         
-                        // HACK KESEJAJARAN 1 PIKSEL
-                        padding: {
-                            top: 1, 
-                            bottom: 0,
-                            left: 0,
-                            right: 0
-                        },
-                        
+                        // **KEMBALIKAN KE FONT DASAR** (ukuran 14 Anda)
                         font: {
                             lineHeight: 1.2, 
                             size: 14,
                         }
+                        // Hapus padding kustom yang menyebabkan masalah
                     },
+                    offset: true, 
+                    categoryPercentage: 0.9, 
+                    barPercentage: 0.8, 
                 }
             },
             plugins: {
@@ -400,32 +386,21 @@ function populateTable(data) {
         data.forEach(row => {
             const branchName = row['Main Branch'];
             const officeName = row['Office']; 
-            
-            // **PERBAIKAN KRUSIAL TERAKHIR: Pembersihan Data Agresif**
-            let rawValue = String(row['Total'] || 0); 
-            rawValue = rawValue.replace(/[^0-9.]/g, ''); // Hapus semua karakter kecuali angka dan titik desimal
-            let activityValue = Number(rawValue); 
-            
-            if (isNaN(activityValue)) {
-                activityValue = 0;
-            }
-            
-            // Tambahkan data ke tabel
-            let tr = document.createElement('tr');
-            Object.values(row).forEach(cell => {
-                let td = document.createElement('td');
-                td.textContent = cell; 
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
-
+            const activityValue = parseFloat(row['Total']) || 0; 
 
             allOffices.add(officeName);
             allBranches.add(branchName);
 
             const currentTotal = officeActivityTotals.get(officeName) || 0;
-            // Gunakan activityValue yang sudah dipastikan angka
             officeActivityTotals.set(officeName, currentTotal + activityValue);
+            
+            let tr = document.createElement('tr');
+            Object.values(row).forEach(cell => {
+                let td = document.createElement('td');
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
         });
 
         updateFilterOptions(OfficeFilter, allOffices, 'Office');
