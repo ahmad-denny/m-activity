@@ -316,12 +316,18 @@ function drawChart(data) {
                         
                         align: 'center', 
                         
-                        // **KEMBALIKAN KE FONT DASAR** (ukuran 14 Anda)
+                        // **SOLUSI HALUS: Dorong label 1px ke bawah**
+                        padding: {
+                            top: 1, 
+                            bottom: 0,
+                            left: 0,
+                            right: 0
+                        },
+                        
                         font: {
                             lineHeight: 1.2, 
                             size: 14,
                         }
-                        // Hapus padding kustom yang menyebabkan masalah
                     },
                     offset: true, 
                     categoryPercentage: 0.9, 
