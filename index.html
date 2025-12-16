@@ -270,7 +270,6 @@ function drawChart(data) {
         return staticColors[index % staticColors.length];
     });
 
-    // Hitung Max Value + 25% untuk ruang datalabels (agar tidak terpotong)
     const maxVal = data.values.length > 0 ? Math.max(...data.values) : 10;
     const suggestedMax = maxVal * 1.25; 
 
@@ -306,9 +305,10 @@ function drawChart(data) {
                     border: { display: true }, 
                     ticks: { display: true, mirror: false },
                     
-                    // **KOREKSI KESEJAJARAN LABEL OFFICE**
+                    // **KOREKSI KESEJAJARAN LABEL OFFICE DENGAN PADDING**
+                    padding: { top: 5, bottom: 5 }, 
+                    
                     offset: true, 
-                    // Setel persentase kategori dan bar secara eksplisit
                     categoryPercentage: 0.8, 
                     barPercentage: 0.9, 
                 }
