@@ -30,8 +30,8 @@
         #chart-container {
             position: relative;
             width: 98%;
-            /* Tingkatkan tinggi agar label X yang panjang bisa ditampilkan dengan lebih baik */
-            height: 400px; 
+            /* Tinggi ditingkatkan untuk menampung banyak Office */
+            height: 600px; 
             margin: 20px auto;
         }
 
@@ -297,8 +297,7 @@ function drawChart(data) {
 
 
     myChart = new Chart(ctx, {
-        // Tipe chart 'bar' secara default adalah VERTICAL bar
-        type: 'bar', 
+        type: 'bar',
         plugins: [ChartDataLabels],
         data: {
             labels: data.labels,
@@ -313,24 +312,21 @@ function drawChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            // PENTING: Mengatur indexAxis ke 'y' membuat Bar Horizontal
+            indexAxis: 'y', 
             scales: {
                 x: { 
                     beginAtZero: true, 
-                    grid: { display: true }, // Tampilkan grid X 
-                    border: { display: true }, 
-                    ticks: {
-                        // Tidak perlu rotasi paksa (biarkan Chart.js menanganinya)
-                        autoSkip: false, 
-                        maxRotation: 0, 
-                        minRotation: 0
-                    }
+                    grid: { display: false }, 
+                    border: { display: false }, 
+                    ticks: { display: true } // Sumbu X (nilai) harus ditampilkan
                 },
                 y: { 
                     beginAtZero: true, 
-                    grid: { display: false }, 
-                    border: { display: false }, 
-                    // Tampilkan ticks/nilai di sumbu Y (kiri)
-                    ticks: { display: true } 
+                    grid: { display: true }, // Grid Y (horizontal) ditampilkan
+                    border: { display: true }, 
+                    // Nama Office ada di sini, biarkan horizontal agar terbaca
+                    ticks: { display: true, mirror: false } 
                 }
             },
             plugins: {
@@ -338,8 +334,7 @@ function drawChart(data) {
                     color: '#000',
                     font: { weight: 'normal' },
                     anchor: 'end',
-                    align: 'end',
-                    // Data label diletakkan di atas bar
+                    align: 'start', // Data label diletakkan di sebelah kanan bar
                     formatter: (value) => value.toLocaleString()
                 },
             }
@@ -443,7 +438,6 @@ function filterAndSearchTable() {
     const showInactive = document.getElementById('inactive-branch-checkbox').checked;
 
     // --- Langkah 1: Penyaringan Data (untuk Tabel) ---
-    // Tabel hanya difilter oleh dropdown
     const filteredData = tableData.filter(row => {
         const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
         const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
@@ -458,7 +452,6 @@ function filterAndSearchTable() {
 
     if (isDefaultView) {
         // SKENARIO BARU/DEFAULT: Branch ALL, Office ALL. Tampilkan Office dan terapkan Checkbox
-        
         const officesToChart = new Map();
 
         officeActivityTotals.forEach((total, officeName) => {
@@ -475,15 +468,11 @@ function filterAndSearchTable() {
 
     } else if (BranchValue !== "" && OfficeValue === "") {
         // SKENARIO 2: Branch Spesifik dipilih. Tampilkan Office di Branch tersebut
-        // Checkbox diabaikan karena ini mode detail
-        
         const chartTotals = new Map();
         
-        // Kumpulkan semua Office dalam Branch yang dipilih
         tableData.forEach(row => {
             if (String(row['Main Branch']).toLowerCase() === BranchValue) {
                 const officeName = row['Office'];
-                // Ambil total yang sudah dihitung sebelumnya di officeActivityTotals
                 const total = officeActivityTotals.get(officeName) || 0;
                 chartTotals.set(officeName, total);
             }
@@ -502,7 +491,6 @@ function filterAndSearchTable() {
         
     } else if (OfficeValue !== "") {
         // SKENARIO 3: Office Spesifik dipilih. Tampilkan Office itu saja.
-        // Checkbox diabaikan
         const officeTotal = officeActivityTotals.get(OfficeValue) || 0;
         chartLabels = [OfficeValue];
         chartValues = [officeTotal];
@@ -516,7 +504,7 @@ function filterAndSearchTable() {
         const chartDataResult = { labels: chartLabels, values: chartValues };
         let sortedChartData = chartDataResult;
         
-        // Sorting hanya dilakukan pada mode yang menampilkan daftar Office (Default View & Branch Spesifik)
+        // Sorting
         if (isDefaultView || (BranchValue !== "" && OfficeValue === "")) {
             
             const chartDataArray = chartDataResult.labels.map((label, index) => ({
