@@ -175,12 +175,12 @@
         </div>
 
         <div id="activity-checkboxes">
-            <strong>Pilihan Tampilan Chart:</strong> 
+            <strong>Pilihan Tampilan Chart (Berdasarkan Office):</strong> 
             <label>
-                <input type="checkbox" id="active-branch-checkbox" value="active" checked onchange="filterAndSearchTable()"> Cabang Ada Aktivitas
+                <input type="checkbox" id="active-branch-checkbox" value="active" checked onchange="filterAndSearchTable()"> Office Ada Aktivitas
             </label>
             <label>
-                <input type="checkbox" id="inactive-branch-checkbox" value="inactive" checked onchange="filterAndSearchTable()"> Cabang Tidak Ada Aktivitas
+                <input type="checkbox" id="inactive-branch-checkbox" value="inactive" checked onchange="filterAndSearchTable()"> Office Tidak Ada Aktivitas
             </label>
         </div>
         <div class="table-container">
@@ -205,8 +205,8 @@ let myChart = null;
 let tableData = [];
 let allOffices = new Set();
 let allBranches = new Set();
-// Map baru untuk menyimpan total aktivitas per Main Branch
-let branchActivityTotals = new Map();
+// Map baru untuk menyimpan total aktivitas per OFFICE
+let officeActivityTotals = new Map(); 
 
 document.addEventListener('DOMContentLoaded', function() {
     // Memuat data dari Dataset.json
@@ -293,11 +293,11 @@ function drawChart(data) {
         if (label.startsWith('TOTAL')) {
             return 'rgba(78, 51, 126, 0.9)'; 
         }
-        // Warna khusus untuk Cabang Tidak Ada Aktivitas (jika 0)
+        // Warna khusus untuk Office Tidak Ada Aktivitas (jika 0)
         if (data.values[index] === 0) {
             return 'rgba(150, 150, 150, 0.7)'; // Abu-abu
         }
-        // Warna untuk cabang aktif
+        // Warna untuk Office aktif
         return staticColors[index % staticColors.length];
     });
 
@@ -367,7 +367,7 @@ function populateTable(data) {
 
     allOffices.clear();
     allBranches.clear();
-    branchActivityTotals.clear(); // Bersihkan Map total
+    officeActivityTotals.clear(); // Bersihkan Map total Office
 
     if (tableData.length > 0) {
         Object.keys(data[0]).forEach(header => {
@@ -378,15 +378,16 @@ function populateTable(data) {
 
         data.forEach(row => {
             const branchName = row['Main Branch'];
+            const officeName = row['Office']; // Ambil nama Office
             // Asumsi kolom total aktivitas adalah 'Total'
             const activityValue = parseFloat(row['Total']) || 0; 
 
-            allOffices.add(row['Office']);
+            allOffices.add(officeName);
             allBranches.add(branchName);
 
-            // Hitung total aktivitas per Main Branch
-            const currentTotal = branchActivityTotals.get(branchName) || 0;
-            branchActivityTotals.set(branchName, currentTotal + activityValue);
+            // HITUNG TOTAL AKTIVITAS PER OFFICE
+            const currentTotal = officeActivityTotals.get(officeName) || 0;
+            officeActivityTotals.set(officeName, currentTotal + activityValue);
             
             // Tampilkan baris tabel
             let tr = document.createElement('tr');
@@ -441,59 +442,92 @@ function filterAndSearchTable() {
     // --- Langkah 2: Logika Pengelompokan Chart ---
     let chartLabels = [];
     let chartValues = [];
-    
-    // Skenario 2: Branch spesifik dipilih & Office "All" (Mode Detail Office di bawah Branch)
-    // Mode detail ini mengabaikan filter checkbox
-    if (BranchValue !== "" && OfficeValue === "") {
-        const chartTotals = new Map();
-        let totalBranchActivity = 0;
-        
-        filteredData.forEach(row => {
-            const officeName = row['Office'];
-            const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
-            
-            const currentOfficeTotal = chartTotals.get(officeName) || 0;
-            chartTotals.set(officeName, currentOfficeTotal + activityValue);
-            totalBranchActivity += activityValue;
-        });
 
-        const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
-        chartTotals.set(totalLabel, totalBranchActivity);
+    // Jika filter Branch atau Office dipilih spesifik (Mode Detail)
+    if (BranchValue !== "" || OfficeValue !== "") {
+        // Dalam mode detail, chart harus menampilkan Office (jika Branch dipilih) 
+        // atau hanya Office spesifik (jika Office dipilih). Checkbox diabaikan.
+
+        const chartTotals = new Map();
+        let totalActivity = 0;
+
+        // Jika Office spesifik dipilih, kita hanya tampilkan itu saja
+        if (OfficeValue !== "") {
+            // Tampilkan Office spesifik (checkbox diabaikan)
+            const officeTotal = officeActivityTotals.get(OfficeValue) || 0;
+            chartTotals.set(OfficeValue, officeTotal);
+            totalActivity = officeTotal;
+        } else {
+            // Jika hanya Branch yang dipilih, tampilkan semua Office di Branch tersebut
+            filteredData.forEach(row => {
+                const officeName = row['Office'];
+                const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
+                
+                const currentOfficeTotal = chartTotals.get(officeName) || 0;
+                chartTotals.set(officeName, currentOfficeTotal + activityValue);
+                totalActivity += activityValue;
+            });
+            
+            // Tambahkan bar TOTAL hanya jika Branch dipilih (Office tidak)
+            if (BranchValue !== "") {
+                const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
+                const allOfficeTotalsInBranch = Array.from(officeActivityTotals.keys())
+                    .filter(office => filteredData.some(row => row['Office'] === office))
+                    .reduce((sum, office) => sum + (officeActivityTotals.get(office) || 0), 0);
+                
+                chartTotals.set(totalLabel, allOfficeTotalsInBranch);
+            }
+        }
         
         const officeLabels = Array.from(chartTotals.keys()).filter(k => !k.startsWith('TOTAL'));
-        chartLabels = [totalLabel].concat(officeLabels);
-        chartValues = chartLabels.map(label => chartTotals.get(label));
         
+        // Atur urutan: [TOTAL, Office1, Office2, ...]
+        if (BranchValue !== "" && OfficeValue === "") {
+             chartLabels = [`TOTAL ${BranchValue.toUpperCase()}`].concat(officeLabels);
+        } else {
+             chartLabels = officeLabels;
+        }
+        
+        chartValues = chartLabels.map(label => chartTotals.get(label) || 0);
+
+
     } else {
-        // Skenario 1 (Branch All, Office All) atau Skenario 4 (Office Spesifik)
-        // Chart menampilkan total Main Branch yang lolos filter DROPDOWN DAN KATEGORI AKTIVITAS
+        // Skenario Default: Filter ALL ALL. Tampilkan Total per Main Branch.
+        // Checkbox AKTIVITAS OFFICE mempengaruhi Main Branch mana yang ditampilkan.
         
         const branchesToChart = new Map(); 
 
-        branchActivityTotals.forEach((total, branchName) => {
+        // 1. Tentukan Office mana saja yang akan dimasukkan berdasarkan checkbox
+        const OfficesToInclude = new Set();
+        officeActivityTotals.forEach((total, officeName) => {
             const isActive = total > 0;
             const includeByCheckbox = (showActive && isActive) || (showInactive && !isActive);
-
             if (includeByCheckbox) {
-                const branchLower = branchName.toLowerCase();
-                // Filter berdasarkan dropdown Branch (jika tidak kosong)
-                const branchMatch = BranchValue === "" || branchLower === BranchValue;
-
-                // Jika Office spesifik dipilih, kita harus memastikan Branch ini mengandung Office tersebut
-                let officeMatch = true;
-                if (OfficeValue !== "") {
-                    // Cek apakah ada baris data di Branch ini yang cocok dengan OfficeValue
-                    officeMatch = tableData.some(row => 
-                        String(row['Main Branch']).toLowerCase() === branchLower && 
-                        String(row['Office']).toLowerCase() === OfficeValue
-                    );
-                }
-
-                if (branchMatch && officeMatch) {
-                    branchesToChart.set(branchName, total);
-                }
+                OfficesToInclude.add(officeName);
             }
         });
+        
+        // 2. Kelompokkan Office yang lolos checkbox ke Main Branch-nya
+        tableData.forEach(row => {
+            const branchName = row['Main Branch'];
+            const officeName = row['Office'];
+            const activityValue = parseFloat(row[COLUMN_TO_TOTAL]) || 0;
+
+            if (OfficesToInclude.has(officeName)) {
+                // Akumulasikan total Branch hanya dari Office yang lolos filter checkbox
+                const currentTotal = branchesToChart.get(branchName) || 0;
+                branchesToChart.set(branchName, currentTotal + activityValue);
+            }
+        });
+
+        // Hapus Branch yang totalnya menjadi 0 setelah filtering Office (kecuali jika showInactive true)
+        if (!showActive || !showInactive) {
+            branchesToChart.forEach((total, branchName) => {
+                if (total === 0 && !showInactive) {
+                    branchesToChart.delete(branchName);
+                }
+            });
+        }
         
         chartLabels = Array.from(branchesToChart.keys());
         chartValues = Array.from(branchesToChart.values());
@@ -506,8 +540,8 @@ function filterAndSearchTable() {
         const chartDataResult = { labels: chartLabels, values: chartValues };
         let sortedChartData = chartDataResult;
         
-        // Sorting hanya dilakukan pada mode total Main Branch (bukan mode detail Office)
-        if (!(BranchValue !== "" && OfficeValue === "")) {
+        // Sorting hanya dilakukan pada mode total Main Branch
+        if (BranchValue === "" && OfficeValue === "") {
             const chartDataArray = chartDataResult.labels.map((label, index) => ({
                 label: label,
                 value: chartDataResult.values[index]
@@ -526,6 +560,25 @@ function filterAndSearchTable() {
             sortedChartData = {
                 labels: sortedActive.labels.concat(inactiveData.map(d => d.label)),
                 values: sortedActive.values.concat(inactiveData.map(d => d.value))
+            };
+        } else if (BranchValue !== "" && OfficeValue === "") {
+             // Sorting Mode Detail Office (total di atas, Office lainnya diurutkan)
+            const chartDataArray = chartDataResult.labels.map((label, index) => ({
+                label: label,
+                value: chartDataResult.values[index]
+            }));
+
+            const totalItem = chartDataArray.find(item => item.label.startsWith('TOTAL'));
+            const officeItems = chartDataArray.filter(item => !item.label.startsWith('TOTAL'));
+
+            const sortedOffice = sortDataByValue({
+                labels: officeItems.map(d => d.label),
+                values: officeItems.map(d => d.value)
+            }, 'desc');
+
+            sortedChartData = {
+                labels: totalItem ? [totalItem.label].concat(sortedOffice.labels) : sortedOffice.labels,
+                values: totalItem ? [totalItem.value].concat(sortedOffice.values) : sortedOffice.values,
             };
         }
 
@@ -572,7 +625,6 @@ function printTable() {
     window.print();
     // Kembalikan konten asli
     document.body.innerHTML = originalContent;
-    // Panggil kembali filterAndSearchTable untuk memastikan tampilan normal setelah mencetak
     filterAndSearchTable(); 
 }
 function openPage() {
