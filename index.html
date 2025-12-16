@@ -305,14 +305,19 @@ function drawChart(data) {
                     beginAtZero: true, 
                     grid: { display: true },
                     border: { display: true }, 
-                    ticks: { 
-                        display: true, 
-                        mirror: false 
-                    },
                     
-                    // **KOREKSI KESEJAJARAN LABEL OFFICE DENGAN PADDING INTERNAL**
+                    // KOREKSI PADDING INTERNAL
                     padding: { top: 5, bottom: 5 }, 
                     
+                    ticks: { 
+                        display: true, 
+                        mirror: false,
+                        // **PENYESUAIAN FONT UNTUK KESEJAJARAN VERTIKAL**
+                        font: {
+                            lineHeight: 1.1, 
+                            size: 12 
+                        }
+                    },
                     offset: true, 
                     categoryPercentage: 0.8, 
                     barPercentage: 0.9, 
