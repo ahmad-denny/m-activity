@@ -211,8 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
-            // Fallback draw chart jika data gagal dimuat
-            drawChart({ labels: ['Gagal Memuat Data'], values: [0] });
+            // Fallback draw chart jika data gagal dimuat (tetapi tidak boleh double call)
         });
         
     updateTimeDate();
@@ -254,6 +253,7 @@ function drawChart(data) {
     }
     const ctx = document.getElementById('myBarChart').getContext('2d');
     
+    // Pastikan myChart dihancurkan sebelum digambar ulang
     if (myChart) {
         myChart.destroy();
     }
@@ -295,11 +295,10 @@ function drawChart(data) {
             maintainAspectRatio: false,
             indexAxis: 'y', // Chart Horizontal
             
-            // Konfigurasi Layout (untuk menghindari konflik padding pada skala)
             layout: {
                 padding: {
                     left: 0,
-                    right: 40, // Tambahkan padding untuk label datalables
+                    right: 40, // Padding untuk label datalables
                     top: 10,
                     bottom: 10
                 }
@@ -328,7 +327,7 @@ function drawChart(data) {
                         
                         align: 'center', 
                         
-                        // **HACK KESEJAJARAN (1 PIKSEL DORONG KE BAWAH)**
+                        // KEMBALIKAN HACK KESEJAJARAN 1 PIKSEL
                         padding: {
                             top: 1, 
                             bottom: 0,
@@ -401,21 +400,31 @@ function populateTable(data) {
         data.forEach(row => {
             const branchName = row['Main Branch'];
             const officeName = row['Office']; 
-            const activityValue = parseFloat(row['Total']) || 0; 
+            
+            // **PERBAIKAN KRUSIAL DI SINI**
+            let activityValue = Number(row['Total']); // Coba ubah menjadi angka
+            if (isNaN(activityValue) || typeof row['Total'] !== 'number') {
+                // Jika NaN (bukan angka), paksa menjadi 0.
+                activityValue = 0;
+            }
+            
+            // Tambahkan data ke tabel
+            let tr = document.createElement('tr');
+            Object.values(row).forEach(cell => {
+                let td = document.createElement('td');
+                // Tampilkan nilai asli di tabel (jika perlu)
+                td.textContent = cell; 
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+
 
             allOffices.add(officeName);
             allBranches.add(branchName);
 
             const currentTotal = officeActivityTotals.get(officeName) || 0;
+            // Gunakan activityValue yang sudah dipastikan angka
             officeActivityTotals.set(officeName, currentTotal + activityValue);
-            
-            let tr = document.createElement('tr');
-            Object.values(row).forEach(cell => {
-                let td = document.createElement('td');
-                td.textContent = cell;
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
         });
 
         updateFilterOptions(OfficeFilter, allOffices, 'Office');
