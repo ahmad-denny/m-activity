@@ -32,9 +32,9 @@
             width: 98%;
             height: 600px; 
             margin: 20px auto;
-            /* PENAMBAHAN CSS: Padding vertikal pada container */
-            padding-top: 5px;
-            padding-bottom: 5px;
+            /* Hapus padding vertikal di container */
+            padding-top: 0; 
+            padding-bottom: 0;
         }
 
         h2 {
@@ -306,23 +306,24 @@ function drawChart(data) {
                     grid: { display: true },
                     border: { display: true }, 
                     
-                    // Padding internal sumbu
-                    padding: { top: 5, bottom: 5 }, 
+                    // Hapus padding sumbu
+                    padding: 0, 
                     
                     ticks: { 
                         display: true, 
                         mirror: false,
                         
-                        // **PENYESUAIAN PADDING KHUSUS PADA LABEL TICK**
-                        padding: 2, // Menambah sedikit ruang vertikal pada label itu sendiri
+                        // Memaksa posisi center
+                        align: 'center', 
+                        padding: 0, // Hapus padding tick
                         
                         font: {
-                            lineHeight: 1.1, 
-                            size: 12 
+                            lineHeight: 1.2, 
+                            size: 14 // Ukuran font diperbesar
                         }
                     },
                     offset: true, 
-                    categoryPercentage: 0.8, 
+                    categoryPercentage: 0.9, 
                     barPercentage: 0.9, 
                 }
             },
