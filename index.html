@@ -30,9 +30,11 @@
         #chart-container {
             position: relative;
             width: 98%;
-            /* Tinggi ditingkatkan untuk menampung banyak Office */
             height: 600px; 
             margin: 20px auto;
+            /* PENAMBAHAN CSS: Padding vertikal pada container */
+            padding-top: 5px;
+            padding-bottom: 5px;
         }
 
         h2 {
@@ -303,9 +305,12 @@ function drawChart(data) {
                     beginAtZero: true, 
                     grid: { display: true },
                     border: { display: true }, 
-                    ticks: { display: true, mirror: false },
+                    ticks: { 
+                        display: true, 
+                        mirror: false 
+                    },
                     
-                    // **KOREKSI KESEJAJARAN LABEL OFFICE DENGAN PADDING**
+                    // **KOREKSI KESEJAJARAN LABEL OFFICE DENGAN PADDING INTERNAL**
                     padding: { top: 5, bottom: 5 }, 
                     
                     offset: true, 
@@ -496,68 +501,3 @@ function filterAndSearchTable() {
 
             const totalItem = chartDataArray.find(item => item.label.startsWith('TOTAL'));
             const officeItems = chartDataArray.filter(item => !item.label.startsWith('TOTAL'));
-
-            const activeData = officeItems.filter(item => item.value > 0);
-            const inactiveData = officeItems.filter(item => item.value === 0);
-
-            const sortedActive = sortDataByValue({
-                labels: activeData.map(d => d.label),
-                values: activeData.map(d => d.value)
-            }, 'desc');
-
-            const finalLabels = sortedActive.labels.concat(inactiveData.map(d => d.label));
-            const finalValues = sortedActive.values.concat(inactiveData.map(d => d.value));
-            
-            sortedChartData = {
-                labels: totalItem ? [totalItem.label].concat(finalLabels) : finalLabels,
-                values: totalItem ? [totalItem.value].concat(finalValues) : finalValues,
-            };
-        }
-
-        drawChart(sortedChartData);
-    }
-
-    // --- Langkah 4: Perbarui Tampilan Tabel ---
-    tableBody.innerHTML = '';
-    filteredData.forEach(row => {
-        let tr = document.createElement('tr');
-        Object.values(row).forEach(cell => {
-             let td = document.createElement('td');
-             td.textContent = cell;
-             tr.appendChild(td);
-        });
-        tableBody.appendChild(tr);
-    });
-}
-
-function resetFilter() {
-    document.getElementById('OfficeFilter').value = "";
-    document.getElementById('BranchFilter').value = "";
-    document.getElementById('ActivityStatusFilter').value = "all";
-    
-    updateOfficeFilter("");
-    filterAndSearchTable(); 
-}
-
-function printTable() {
-    let tableContent = document.getElementById("dataTable").outerHTML;
-    let originalContent = document.body.innerHTML;
-
-    document.body.innerHTML = `
-        <style>
-            .print-btn, .filter-container { display: none; }
-            h2, h3 { display: block; text-align: center; }
-            table { font-size: 10px; }
-        </style>
-        ${document.getElementById("dataTable").outerHTML}
-    `;
-    window.print();
-    document.body.innerHTML = originalContent;
-    filterAndSearchTable(); 
-}
-function openPage() {
-    window.location.href = 'https://bmi-apps.github.io/regionsumatera/';
-}
-</script>
-</body>
-</html>
