@@ -189,37 +189,6 @@ let allOffices = new Set();
 let allBranches = new Set();
 let officeActivityTotals = new Map(); 
 
-// *** CUSTOM PLUGIN UNTUK MEMAKSA KESEJAJARAN VERTIKAL ***
-const verticalAligner = {
-    id: 'verticalAligner',
-    afterDraw: (chart, args, options) => {
-        const ctx = chart.ctx;
-        const scaleY = chart.scales.y;
-        
-        // Ambil konfigurasi font dari skala Y asli
-        const fontOpts = scaleY.options.ticks.font;
-        ctx.font = `${fontOpts.style} ${fontOpts.size}px ${fontOpts.family}`;
-        ctx.fillStyle = fontOpts.color || 'black';
-        ctx.textAlign = 'right'; // Teks diletakkan di kanan (dekat sumbu Y)
-        ctx.textBaseline = 'middle'; // Mengatur titik Y adalah pusat vertikal teks
-
-        const pixelShift = options.yTickOffset || 0; // Ambil nilai pergeseran dari options
-
-        chart.data.labels.forEach((label, index) => {
-            const meta = chart.getDatasetMeta(0); 
-            const barElement = meta.data[index];
-
-            if (barElement) {
-                const xPos = scaleY.left; 
-                const yPos = barElement.y;
-
-                // Gambar label di posisi tengah bar, ditambah pergeseran manual
-                ctx.fillText(label, xPos - 5, yPos + pixelShift); 
-            }
-        });
-    }
-};
-
 
 document.addEventListener('DOMContentLoaded', function() {
     // Memuat data dari Dataset.json
@@ -309,8 +278,7 @@ function drawChart(data) {
 
     myChart = new Chart(ctx, {
         type: 'bar',
-        // Tambahkan kedua plugin
-        plugins: [ChartDataLabels, verticalAligner],
+        plugins: [ChartDataLabels],
         data: {
             labels: data.labels,
             datasets: [{
@@ -325,11 +293,6 @@ function drawChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             indexAxis: 'y', // Chart Horizontal
-            
-            // Konfigurasi Plugin Custom
-            verticalAligner: {
-                yTickOffset: 1 // Coba pergeseran 1 piksel ke bawah (positif)
-            },
             
             scales: {
                 x: { 
@@ -347,14 +310,22 @@ function drawChart(data) {
                     padding: 0, 
                     
                     ticks: { 
-                        display: false, // **Sembunyikan tick bawaan**
+                        display: true, // Kembali ke display true
                         mirror: false,
                         
+                        align: 'center', 
+                        
+                        // **SOLUSI HACK: Memaksa padding vertikal pada Ticks**
+                        padding: {
+                            top: 2, // Dorong label 2px ke bawah
+                            bottom: 0,
+                            left: 0,
+                            right: 0
+                        },
+                        
                         font: {
+                            lineHeight: 1.2, 
                             size: 14,
-                            lineHeight: 1.2,
-                            // Atur warna font agar bisa diambil oleh plugin
-                            color: 'black' 
                         }
                     },
                     offset: true, 
