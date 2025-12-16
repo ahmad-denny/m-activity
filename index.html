@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
-            // Hapus fallback drawChart untuk menghindari error 'Canvas is already in use'
+            // Hanya log error, tidak double call drawChart
         });
         
     updateTimeDate();
@@ -327,7 +327,7 @@ function drawChart(data) {
                         
                         align: 'center', 
                         
-                        // KEMBALIKAN HACK KESEJAJARAN 1 PIKSEL
+                        // HACK KESEJAJARAN 1 PIKSEL
                         padding: {
                             top: 1, 
                             bottom: 0,
@@ -401,12 +401,12 @@ function populateTable(data) {
             const branchName = row['Main Branch'];
             const officeName = row['Office']; 
             
-            // **PERBAIKAN KRUSIAL: Pembersihan Data Agresif**
-            let rawValue = String(row['Total']).replace(/[\s,]/g, ''); // Hapus spasi dan koma
-            let activityValue = Number(rawValue); // Konversi ke Number
+            // **PERBAIKAN KRUSIAL TERAKHIR: Pembersihan Data Agresif**
+            let rawValue = String(row['Total'] || 0); 
+            rawValue = rawValue.replace(/[^0-9.]/g, ''); // Hapus semua karakter kecuali angka dan titik desimal
+            let activityValue = Number(rawValue); 
             
             if (isNaN(activityValue)) {
-                // Jika NaN (bukan angka yang valid), paksa menjadi 0.
                 activityValue = 0;
             }
             
