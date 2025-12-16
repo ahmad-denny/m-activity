@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             populateTable(data);
-            filterAndSearchTable(); // Inisialisasi filter dan chart
+            filterAndSearchTable(); 
 
             // Event Listeners untuk Dropdown
             document.getElementById('BranchFilter').addEventListener('change', filterAndSearchTable);
@@ -211,6 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error loading JSON:', error);
+            // Fallback draw chart jika data gagal dimuat
             drawChart({ labels: ['Gagal Memuat Data'], values: [0] });
         });
         
@@ -278,7 +279,7 @@ function drawChart(data) {
 
     myChart = new Chart(ctx, {
         type: 'bar',
-        plugins: [ChartDataLabels], // HANYA ChartDataLabels
+        plugins: [ChartDataLabels],
         data: {
             labels: data.labels,
             datasets: [{
@@ -300,7 +301,7 @@ function drawChart(data) {
                     suggestedMax: suggestedMax, 
                     grid: { display: false }, 
                     border: { display: false }, 
-                    ticks: { display: false } // Hilangkan nilai/angka pada sumbu X
+                    ticks: { display: false } 
                 },
                 y: { 
                     beginAtZero: true, 
@@ -315,18 +316,12 @@ function drawChart(data) {
                         
                         align: 'center', 
                         
-                        // **SOLUSI HACK: Memaksa padding vertikal pada Ticks**
-                        padding: {
-                            top: 2, // Dorong label 2px ke bawah
-                            bottom: 0,
-                            left: 0,
-                            right: 0
-                        },
-                        
+                        // **KEMBALIKAN KE FONT DASAR** (ukuran 14 Anda)
                         font: {
                             lineHeight: 1.2, 
                             size: 14,
                         }
+                        // Hapus padding kustom yang menyebabkan masalah
                     },
                     offset: true, 
                     categoryPercentage: 0.9, 
@@ -435,7 +430,7 @@ function filterAndSearchTable() {
 
     const OfficeValue = OfficeFilterElement.value.toLowerCase();
     const BranchValue = BranchFilterElement.value.toLowerCase();
-    const ActivityStatusValue = ActivityStatusFilterElement.value; // 'all', 'active', atau 'inactive'
+    const ActivityStatusValue = ActivityStatusFilterElement.value; 
     
     // --- Langkah 1: Penyaringan Data (untuk Tabel) ---
     const filteredData = tableData.filter(row => {
