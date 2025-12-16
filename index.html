@@ -32,7 +32,6 @@
             width: 98%;
             height: 600px; 
             margin: 20px auto;
-            /* Hapus padding vertikal di container */
             padding-top: 0; 
             padding-bottom: 0;
         }
@@ -306,21 +305,23 @@ function drawChart(data) {
                     grid: { display: true },
                     border: { display: true }, 
                     
-                    // Padding sumbu diatur 0
                     padding: 0, 
                     
                     ticks: { 
                         display: true, 
                         mirror: false,
                         
-                        // Memaksa posisi center
-                        align: 'center', 
-                        // Padding tick diatur 0
-                        padding: 0, 
+                        // **SOLUSI HACK: Menggunakan Callback untuk Penyesuaian Vertikal**
+                        callback: function(value, index, values) {
+                            const label = this.getLabelForValue(value);
+                            // Menggunakan baris kosong untuk sedikit menggeser label ke bawah
+                            return [' ', label]; 
+                        },
                         
+                        // Konfigurasi Font yang Bersih
                         font: {
-                            lineHeight: 1.2, 
-                            size: 14 
+                            size: 14,
+                            lineHeight: 1.2
                         }
                     },
                     offset: true, 
@@ -576,6 +577,3 @@ function openPage() {
 </script>
 </body>
 </html>
-
-
-
