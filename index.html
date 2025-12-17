@@ -121,6 +121,10 @@
 <div class="container">
     <h2>M-Activity Performance Region Sumatera - Dec 2025</h2>
     
+    <div id="chart-container">
+        <canvas id="myBarChart"></canvas>
+    </div>
+
     <div class="filter-container">
         <select id="BranchFilter">
             <option value="">Semua Main Branch</option>
@@ -137,10 +141,6 @@
         <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
         <button class="btn back-btn" onclick="openPage()">Back</button>
         <div id="time-date"></div>
-    </div>
-
-    <div id="chart-container">
-        <canvas id="myBarChart"></canvas>
     </div>
 
     <div class="table-container">
@@ -377,3 +377,4 @@ function openPage() {
 </script>
 </body>
 </html>
+
