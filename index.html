@@ -9,179 +9,154 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
     <style>
-        /* CSS Disederhanakan dan Digabungkan */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             text-align: center;
-            background-color: #f8f9fa;
+            background-color: #f0f2f5;
             padding: 20px;
             margin: 0;
         }
         .container {
-            width: 98%;
-            max-width: 98%;
+            width: 95%;
+            max-width: 1200px;
             margin: 0 auto;
             background: #fff;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            overflow-x: hidden;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
         }
+        
+        /* Tinggi Container Chart dibuat dinamis via JS */
         #chart-container {
             position: relative;
-            width: 98%;
-            /* Tinggi ditingkatkan untuk menampung banyak Office */
-            height: 600px; 
+            width: 100%;
             margin: 20px auto;
+            min-height: 300px; 
         }
 
         h2 {
             color: white;
-            background-color: purple;
-            padding: 10px;
-            border-radius: 5px;
+            background: linear-gradient(90deg, #6a1b9a, #8e24aa);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 0;
         }
-        h3 {
-            text-align: center;
-            font-size: 13px;
-            font-style: italic;
-            font-weight: lighter;
-            margin: 10px 0;
-        }
+
         .filter-container {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 10px;
-            padding: 15px;
-            background: #f1f1f1;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            justify-content: flex-start;
-        }
-        
-        input[type="text"], select {
-            width: auto;
-            max-width: 300px;
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-            flex-grow: 1;
-        }
-        .reset-btn, .print-btn {
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-            background: green;
-        }
-        .reset-btn:hover {
-            background: darkgreen;
-        }
-        .back-btn {
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-            background: red;
-        }
-        .back-btn:hover {
-            background: darkred;
-        }
-        .print-btn {
-            background: #28a745;
-            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
         }
 
-        /* Gaya Tabel */
+        #time-date {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            color: white;
+        }
+        .reset-btn { background: #28a745; }
+        .reset-btn:hover { background: #218838; }
+        .back-btn { background: #dc3545; }
+        .back-btn:hover { background: #c82333; }
+        .print-btn { background: #6f42c1; margin-top: 20px; padding: 12px 30px; font-size: 16px; }
+
         .table-container {
             overflow-x: auto;
-            width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1px;
             font-size: 13px;
         }
-        th, td {
-            padding: 8px;
-            border: 1px solid #ddd;
-            text-align: center;
+        th {
+            background-color: #6a1b9a;
+            color: white;
+            padding: 12px;
+            position: sticky;
+            top: 0;
         }
         td {
+            padding: 10px;
+            border: 1px solid #eee;
             text-align: left;
-            white-space: nowrap;
         }
-        table td:nth-child(n+3){
-            text-align: center;
-        }
-        th {
-            background-color: purple;
-            color: white;
-        }
+        tr:nth-child(even) { background-color: #f9f9f9; }
 
-        /* Mobile Responsiveness Disederhanakan */
         @media (max-width: 768px) {
-            .filter-container {
-                flex-direction: column;
-            }
-            input, select, .reset-btn, .back-btn, .print-btn {
-                width: 100%;
-            }
+            .filter-container { flex-direction: column; align-items: stretch; }
+            #time-date { margin: 10px auto; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>M-Activity Performance Region Sumatera on December 2025</h2>
-        <div id="chart-container">
-            <canvas id="myBarChart"></canvas>
-        </div>
-
-        <div class="filter-container">
-            <select id="BranchFilter">
-                <option value="">Main Branch</option>
-            </select>
-            <select id="OfficeFilter">
-                <option value="">Office</option>
-            </select>
-            <select id="ActivityStatusFilter">
-                <option value="all">Status Aktivitas (Semua)</option>
-                <option value="active">Office Ada Aktivitas</option>
-                <option value="inactive">Office Tidak Ada Aktivitas</option>
-            </select>
-            
-            <button class="reset-btn" onclick="resetFilter()">Reset</button>
-            <button class="back-btn" onclick="openPage()">Back</button>
-            <h3><p id="time-date"></p></h3>
-        </div>
+<div class="container">
+    <h2>M-Activity Performance Region Sumatera - Dec 2025</h2>
+    
+    <div class="filter-container">
+        <select id="BranchFilter">
+            <option value="">Semua Main Branch</option>
+        </select>
+        <select id="OfficeFilter">
+            <option value="">Semua Office</option>
+        </select>
+        <select id="ActivityStatusFilter">
+            <option value="all">Semua Status</option>
+            <option value="active">Ada Aktivitas</option>
+            <option value="inactive">Tidak Ada Aktivitas</option>
+        </select>
         
-        <div class="table-container">
-            <table id="dataTable">
-                <thead>
-                    <tr id="tableHead"></tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
-    <br>
+        <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
+        <button class="btn back-btn" onclick="openPage()">Back</button>
+        <div id="time-date"></div>
     </div>
 
-    <button class="print-btn" onclick="printTable()">Print / Save PDF</button>
+    <div id="chart-container">
+        <canvas id="myBarChart"></canvas>
+    </div>
+
+    <div class="table-container">
+        <table id="dataTable">
+            <thead>
+                <tr id="tableHead"></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<button class="btn print-btn" onclick="printTable()">Print / Simpan PDF</button>
 
 <script>
-// app.js
 const ChartDataLabels = window.ChartDataLabels;
-const REPO_NAME = 'm-activity';
-const BASE_PATH = './';
 let myChart = null;
 let tableData = [];
 let allOffices = new Set();
@@ -189,32 +164,43 @@ let allBranches = new Set();
 let officeActivityTotals = new Map(); 
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Memuat data dari Dataset.json
+    // Simulasi Fetch Data - Ganti dengan fetch('Dataset.json') jika dijalankan di server
+    // Contoh Data Dummy untuk demo:
+    const dummyData = [
+        {"Main Branch": "Medan", "Office": "Medan 1", "Total": 150},
+        {"Main Branch": "Medan", "Office": "Medan 2", "Total": 0},
+        {"Main Branch": "Palembang", "Office": "PLM 1", "Total": 85},
+        {"Main Branch": "Palembang", "Office": "PLM 2", "Total": 200},
+        {"Main Branch": "Lampung", "Office": "LPG 1", "Total": 45}
+    ];
+
+    // Gunakan fetch asli Anda jika sudah siap
     fetch('Dataset.json')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Gagal memuat Dataset.json. Pastikan file ada.');
-            }
-            return response.json();
-        })
+        .then(res => res.json())
         .then(data => {
-            populateTable(data);
-            filterAndSearchTable(); // Inisialisasi filter dan chart
-
-            // Event Listeners untuk Dropdown
-            document.getElementById('BranchFilter').addEventListener('change', filterAndSearchTable);
-            document.getElementById('OfficeFilter').addEventListener('change', filterAndSearchTable);
-            document.getElementById('ActivityStatusFilter').addEventListener('change', filterAndSearchTable);
-
+            initializeDashboard(data);
         })
-        .catch(error => {
-            console.error('Error loading JSON:', error);
-            drawChart({ labels: ['Gagal Memuat Data'], values: [0] });
+        .catch(err => {
+            console.warn("Dataset.json tidak ditemukan, menggunakan data demo.");
+            initializeDashboard(dummyData);
         });
         
     updateTimeDate();
     setInterval(updateTimeDate, 1000);
 });
+
+function initializeDashboard(data) {
+    populateTable(data);
+    
+    document.getElementById('BranchFilter').addEventListener('change', (e) => {
+        updateOfficeFilter(e.target.value);
+        filterAndSearchTable();
+    });
+    document.getElementById('OfficeFilter').addEventListener('change', filterAndSearchTable);
+    document.getElementById('ActivityStatusFilter').addEventListener('change', filterAndSearchTable);
+    
+    filterAndSearchTable();
+}
 
 function updateTimeDate() {
     const now = new Date();
@@ -222,57 +208,30 @@ function updateTimeDate() {
     const date = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
     document.getElementById("time-date").innerHTML = `${date} | ${time}`;
 }
-    
-function sortDataByValue(data, sortOrder = 'desc') {
-    const pairedData = data.labels.map((label, index) => ({
-        label: label,
-        value: data.values[index]
-    }));
-
-    pairedData.sort((a, b) => {
-        return sortOrder === 'asc' ? a.value - b.value : b.value - a.value;
-    });
-
-    const sortedLabels = pairedData.map(item => item.label);
-    const sortedValues = pairedData.map(item => item.value);
-
-    return { labels: sortedLabels, values: sortedValues };
-}
 
 function drawChart(data) {
+    const chartContainer = document.getElementById('chart-container');
     if (!data || data.labels.length === 0) {
         if (myChart) myChart.destroy();
-        const canvas = document.getElementById('myBarChart');
-        if (canvas) {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        chartContainer.style.height = '300px';
         return; 
     }
+
+    // --- LOGIKA DYNAMIC HEIGHT (Penting agar label sejajar) ---
+    const barHeight = 35; 
+    const calculatedHeight = (data.labels.length * barHeight) + 60;
+    chartContainer.style.height = calculatedHeight + 'px';
+    
     const ctx = document.getElementById('myBarChart').getContext('2d');
+    if (myChart) myChart.destroy();
     
-    if (myChart) {
-        myChart.destroy();
-    }
-    
-    const staticColors = [
-        'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)',
-        'rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)'
-    ];
+    const staticColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
 
     const backgroundColors = data.labels.map((label, index) => {
-        if (label.startsWith('TOTAL')) {
-            return 'rgba(78, 51, 126, 0.9)'; 
-        }
-        if (data.values[index] === 0) {
-            return 'rgba(150, 150, 150, 0.7)'; // Abu-abu
-        }
+        if (label.startsWith('TOTAL')) return '#4E337E'; 
+        if (data.values[index] === 0) return '#D2D2D2';
         return staticColors[index % staticColors.length];
     });
-
-    const maxVal = data.values.length > 0 ? Math.max(...data.values) : 10;
-    const suggestedMax = maxVal * 1.25; 
-
 
     myChart = new Chart(ctx, {
         type: 'bar',
@@ -280,281 +239,138 @@ function drawChart(data) {
         data: {
             labels: data.labels,
             datasets: [{
-                label: 'Office Activity',
                 data: data.values,
                 backgroundColor: backgroundColors,
-                borderColor: backgroundColors.map(c => c.replace('0.7', '1').replace('0.8', '1').replace('0.9', '1')),
-                borderWidth: 1
+                borderWidth: 0,
+                barPercentage: 0.7,
+                categoryPercentage: 0.8
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            indexAxis: 'y', // Chart Horizontal
+            indexAxis: 'y',
+            layout: { padding: { right: 60, left: 10 } },
             scales: {
-                x: { 
-                    beginAtZero: true, 
-                    suggestedMax: suggestedMax, 
-                    grid: { display: false }, 
-                    border: { display: false }, 
-                    ticks: { display: false } // Hilangkan nilai/angka pada sumbu X
-                },
+                x: { display: false, beginAtZero: true },
                 y: { 
-                    beginAtZero: true, 
-                    grid: { display: true },
-                    border: { display: true }, 
-                    ticks: { display: true, mirror: false },
-                    
-                    // **KOREKSI KESEJAJARAN LABEL OFFICE DENGAN PADDING**
-                    padding: { top: 5, bottom: 5 }, 
-                    
-                    offset: true, 
-                    categoryPercentage: 0.8, 
-                    barPercentage: 0.9, 
+                    offset: true,
+                    grid: { display: false },
+                    ticks: { 
+                        autoSkip: false,
+                        font: { size: 12, weight: '500' },
+                        padding: 10
+                    }
                 }
             },
             plugins: {
+                legend: { display: false },
                 datalabels: {
-                    color: '#000',
-                    font: { weight: 'normal' },
                     anchor: 'end',
-                    align: 'end',   // Pindah label ke luar bar (kanan)
-                    offset: 4,      
-                    formatter: (value) => value.toLocaleString()
-                },
+                    align: 'right',
+                    offset: 10,
+                    color: '#444',
+                    font: { weight: 'bold' },
+                    formatter: (val) => val.toLocaleString()
+                }
             }
         }
     });
-}
-
-function updateOfficeFilter(selectedBranch) {
-    const OfficeFilter = document.getElementById('OfficeFilter');
-    
-    OfficeFilter.innerHTML = '<option value="">Office</option>'; 
-    
-    if (selectedBranch === "") {
-        updateFilterOptions(OfficeFilter, allOffices, 'Office');
-    } else {
-        let relevantOffices = new Set();
-        tableData.forEach(row => {
-            if (String(row['Main Branch']).toLowerCase() === selectedBranch.toLowerCase()) {
-                relevantOffices.add(row['Office']);
-            }
-        });
-        updateFilterOptions(OfficeFilter, relevantOffices, 'Office');
-    }
-
-    filterAndSearchTable();
 }
 
 function populateTable(data) {
     const tableHead = document.getElementById('tableHead');
     const tableBody = document.getElementById('tableBody');
-    const OfficeFilter = document.getElementById('OfficeFilter');
-    const BranchFilter = document.getElementById('BranchFilter');
+    tableData = data;
 
-    tableHead.innerHTML = '';
-    tableBody.innerHTML = '';
-    tableData = Array.isArray(data) ? data : [];
-
-    allOffices.clear();
-    allBranches.clear();
-    officeActivityTotals.clear(); 
-
-    if (tableData.length > 0) {
-        Object.keys(data[0]).forEach(header => {
-            let th = document.createElement('th');
-            th.textContent = header;
-            tableHead.appendChild(th);
-        });
-
+    if (data.length > 0) {
+        // Headers
+        tableHead.innerHTML = Object.keys(data[0]).map(h => `<th>${h}</th>`).join('');
+        
+        // Data Process
         data.forEach(row => {
-            const branchName = row['Main Branch'];
-            const officeName = row['Office']; 
-            const activityValue = parseFloat(row['Total']) || 0; 
-
-            allOffices.add(officeName);
-            allBranches.add(branchName);
-
-            const currentTotal = officeActivityTotals.get(officeName) || 0;
-            officeActivityTotals.set(officeName, currentTotal + activityValue);
-            
-            let tr = document.createElement('tr');
-            Object.values(row).forEach(cell => {
-                let td = document.createElement('td');
-                td.textContent = cell;
-                tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
+            allOffices.add(row['Office']);
+            allBranches.add(row['Main Branch']);
+            const val = parseFloat(row['Total']) || 0;
+            officeActivityTotals.set(row['Office'], (officeActivityTotals.get(row['Office']) || 0) + val);
         });
 
-        updateFilterOptions(OfficeFilter, allOffices, 'Office');
-        updateFilterOptions(BranchFilter, allBranches, 'Main Branch');
+        updateFilterOptions(document.getElementById('BranchFilter'), allBranches, 'Semua Main Branch');
+        updateFilterOptions(document.getElementById('OfficeFilter'), allOffices, 'Semua Office');
     }
 }
 
-function updateFilterOptions(filterElement, values, defaultText) {
-    filterElement.innerHTML = `<option value="">${defaultText}</option>`;
-    const sortedValues = Array.from(values).sort();
-    sortedValues.forEach(value => {
-        let option = document.createElement('option');
-        option.value = value;
-        option.textContent = value;
-        filterElement.appendChild(option);
+function updateFilterOptions(el, set, def) {
+    el.innerHTML = `<option value="">${def}</option>` + 
+        Array.from(set).sort().map(v => `<option value="${v}">${v}</option>`).join('');
+}
+
+function updateOfficeFilter(branch) {
+    const relevant = new Set();
+    tableData.forEach(row => {
+        if (!branch || row['Main Branch'] === branch) relevant.add(row['Office']);
     });
+    updateFilterOptions(document.getElementById('OfficeFilter'), relevant, 'Semua Office');
 }
 
 function filterAndSearchTable() {
-    if (!Array.isArray(tableData) || tableData.length === 0) {
-        drawChart({ labels: [], values: [] });
-        return;
-    }
-    const OfficeFilterElement = document.getElementById('OfficeFilter');
-    const BranchFilterElement = document.getElementById('BranchFilter');
-    const ActivityStatusFilterElement = document.getElementById('ActivityStatusFilter');
+    const branchVal = document.getElementById('BranchFilter').value;
+    const officeVal = document.getElementById('OfficeFilter').value;
+    const statusVal = document.getElementById('ActivityStatusFilter').value;
 
-    const OfficeValue = OfficeFilterElement.value.toLowerCase();
-    const BranchValue = BranchFilterElement.value.toLowerCase();
-    const ActivityStatusValue = ActivityStatusFilterElement.value; // 'all', 'active', atau 'inactive'
-    
-    // --- Langkah 1: Penyaringan Data (untuk Tabel) ---
-    const filteredData = tableData.filter(row => {
-        const BranchMatch = BranchValue === "" || String(row['Main Branch']).toLowerCase() === BranchValue;
-        const OfficeMatch = OfficeValue === "" || String(row['Office']).toLowerCase() === OfficeValue;
-        return BranchMatch && OfficeMatch;
+    const filtered = tableData.filter(row => {
+        return (!branchVal || row['Main Branch'] === branchVal) && 
+               (!officeVal || row['Office'] === officeVal);
     });
 
-    // --- Langkah 2: Logika Pengelompokan Chart ---
-    let chartLabels = [];
-    let chartValues = [];
-    
-    let isDefaultView = (BranchValue === "" && OfficeValue === "");
+    // Chart Logic
+    let labels = [], values = [];
+    const officeMap = new Map();
 
-    if (isDefaultView || (BranchValue !== "" && OfficeValue === "")) {
-        const officesToChart = new Map();
-        
-        const relevantOffices = new Set();
-        if (BranchValue === "") {
-            allOffices.forEach(office => relevantOffices.add(office));
-        } else {
-            tableData.forEach(row => {
-                if (String(row['Main Branch']).toLowerCase() === BranchValue) {
-                    relevantOffices.add(row['Office']);
-                }
-            });
-        }
-
-        relevantOffices.forEach(officeName => {
-            const total = officeActivityTotals.get(officeName) || 0;
-            const isActive = total > 0;
-            let includeByStatus = false;
-
-            if (ActivityStatusValue === 'all') {
-                includeByStatus = true;
-            } else if (ActivityStatusValue === 'active' && isActive) {
-                includeByStatus = true;
-            } else if (ActivityStatusValue === 'inactive' && !isActive) {
-                includeByStatus = true;
-            }
-
-            if (includeByStatus) {
-                 officesToChart.set(officeName, total);
-            }
-        });
-        
-        chartLabels = Array.from(officesToChart.keys());
-        chartValues = Array.from(officesToChart.values());
-        
-        if (BranchValue !== "") {
-            const totalBranchActivity = Array.from(chartValues).reduce((sum, val) => sum + val, 0);
-            const totalLabel = `TOTAL ${BranchValue.toUpperCase()}`;
-            
-            chartLabels = [totalLabel].concat(chartLabels);
-            chartValues = [totalBranchActivity].concat(chartValues);
-        }
-
-    } else if (OfficeValue !== "") {
-        const officeTotal = officeActivityTotals.get(OfficeValue) || 0;
-        chartLabels = [OfficeValue];
-        chartValues = [officeTotal];
-    }
-
-
-    // --- Langkah 3: Gambar Ulang Chart (dengan Sorting) ---
-    if (chartLabels.length === 0) {
-        drawChart({ labels: [], values: [] });
-    } else {
-        const chartDataResult = { labels: chartLabels, values: chartValues };
-        let sortedChartData = chartDataResult;
-        
-        if (OfficeValue === "") {
-            
-            const chartDataArray = chartDataResult.labels.map((label, index) => ({
-                label: label,
-                value: chartDataResult.values[index]
-            }));
-
-            const totalItem = chartDataArray.find(item => item.label.startsWith('TOTAL'));
-            const officeItems = chartDataArray.filter(item => !item.label.startsWith('TOTAL'));
-
-            const activeData = officeItems.filter(item => item.value > 0);
-            const inactiveData = officeItems.filter(item => item.value === 0);
-
-            const sortedActive = sortDataByValue({
-                labels: activeData.map(d => d.label),
-                values: activeData.map(d => d.value)
-            }, 'desc');
-
-            const finalLabels = sortedActive.labels.concat(inactiveData.map(d => d.label));
-            const finalValues = sortedActive.values.concat(inactiveData.map(d => d.value));
-            
-            sortedChartData = {
-                labels: totalItem ? [totalItem.label].concat(finalLabels) : finalLabels,
-                values: totalItem ? [totalItem.value].concat(finalValues) : finalValues,
-            };
-        }
-
-        drawChart(sortedChartData);
-    }
-
-    // --- Langkah 4: Perbarui Tampilan Tabel ---
-    tableBody.innerHTML = '';
-    filteredData.forEach(row => {
-        let tr = document.createElement('tr');
-        Object.values(row).forEach(cell => {
-             let td = document.createElement('td');
-             td.textContent = cell;
-             tr.appendChild(td);
-        });
-        tableBody.appendChild(tr);
+    filtered.forEach(row => {
+        officeMap.set(row['Office'], (officeMap.get(row['Office']) || 0) + (parseFloat(row['Total']) || 0));
     });
+
+    officeMap.forEach((val, key) => {
+        if (statusVal === 'all' || (statusVal === 'active' && val > 0) || (statusVal === 'inactive' && val === 0)) {
+            labels.push(key);
+            values.push(val);
+        }
+    });
+
+    // Sorting (Besar ke Kecil)
+    const sorted = labels.map((l, i) => ({l, v: values[i]})).sort((a,b) => b.v - a.v);
+    
+    let finalLabels = sorted.map(d => d.l);
+    let finalValues = sorted.map(d => d.v);
+
+    if (branchVal && !officeVal) {
+        const total = finalValues.reduce((a, b) => a + b, 0);
+        finalLabels.unshift(`TOTAL ${branchVal.toUpperCase()}`);
+        finalValues.unshift(total);
+    }
+
+    drawChart({ labels: finalLabels, values: finalValues });
+
+    // Update Table
+    const tableBody = document.getElementById('tableBody');
+    tableBody.innerHTML = filtered.map(row => 
+        `<tr>${Object.values(row).map(v => `<td>${v}</td>`).join('')}</tr>`
+    ).join('');
 }
 
 function resetFilter() {
-    document.getElementById('OfficeFilter').value = "";
     document.getElementById('BranchFilter').value = "";
+    document.getElementById('OfficeFilter').value = "";
     document.getElementById('ActivityStatusFilter').value = "all";
-    
     updateOfficeFilter("");
-    filterAndSearchTable(); 
+    filterAndSearchTable();
 }
 
 function printTable() {
-    let tableContent = document.getElementById("dataTable").outerHTML;
-    let originalContent = document.body.innerHTML;
-
-    document.body.innerHTML = `
-        <style>
-            .print-btn, .filter-container { display: none; }
-            h2, h3 { display: block; text-align: center; }
-            table { font-size: 10px; }
-        </style>
-        ${document.getElementById("dataTable").outerHTML}
-    `;
     window.print();
-    document.body.innerHTML = originalContent;
-    filterAndSearchTable(); 
 }
+
 function openPage() {
     window.location.href = 'https://bmi-apps.github.io/regionsumatera/';
 }
