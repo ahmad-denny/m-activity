@@ -28,7 +28,7 @@
         
         #chart-container {
             position: relative;
-            width: 95%;
+            width: 100%;
             margin: 20px auto;
             min-height: 300px; 
         }
@@ -361,7 +361,7 @@ function drawChart(data) {
             plugins: {
                 legend: { display: false },
                 datalabels: {
-                    anchor: 'end', align: 'right', color: '#444', font: { weight: 'bold' },
+                    anchor: 'center', align: 'right', color: '#444', font: { weight: 'bold' },
                     formatter: (val) => val.toLocaleString()
                 }
             }
@@ -404,5 +404,6 @@ function openPage() { window.location.href = 'https://bmi-apps.github.io/regions
 </script>
 </body>
 </html>
+
 
 
