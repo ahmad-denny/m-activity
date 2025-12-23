@@ -304,6 +304,10 @@ function filterAndSearchTable() {
     }
 }
 
+function capitalizeWords(str) {
+  return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+}
+    
 function updateChartFromData(data, branchVal) {
     const officeMap = new Map();
     data.forEach(row => {
@@ -316,7 +320,8 @@ function updateChartFromData(data, branchVal) {
 
     if (branchVal && finalValues.length > 0) {
         const total = finalValues.reduce((a, b) => a + b, 0);
-        finalLabels.unshift(`TOTAL ${branchVal.toUpperCase()}`);
+//        finalLabels.unshift(`Total ${branchVal.toUpperCase()}`);
+        finalLabels.unshift(`Total ${capitalizeWords(branchVal)}`);
         finalValues.unshift(total);
     }
 
@@ -399,3 +404,4 @@ function openPage() { window.location.href = 'https://bmi-apps.github.io/regions
 </script>
 </body>
 </html>
+
