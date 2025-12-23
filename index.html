@@ -132,8 +132,15 @@
         }
         tr:nth-child(even) { background-color: #f9f9f9; }
 
-        @media (max-width: 768px) {
-            .filter-container { flex-direction: column; align-items: stretch; }
+        @media screen and (max-width: 768px) {
+            .filter-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            input, select, .reset-btn, .back-btn, .print-btn {
+                width: 100%;
+                max-width: none;
+            }
         }
     </style>
 </head>
@@ -404,6 +411,7 @@ function openPage() { window.location.href = 'https://bmi-apps.github.io/regions
 </script>
 </body>
 </html>
+
 
 
 
