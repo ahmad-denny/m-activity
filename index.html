@@ -83,31 +83,48 @@
             border-radius: 8px;
             border: 1px solid #eee;
         }
+        
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
+            table-layout: auto;
         }
+
         th {
             background-color: #6a1b9a;
             color: white;
-            padding: 12px;
+            padding: 12px 8px;
             position: sticky;
             top: 0;
-            cursor: pointer; /* Menandakan bisa diklik */
+            cursor: pointer;
             user-select: none;
-            white-space: nowrap;
+            /* Wrap Text Settings */
+            white-space: normal;
+            word-wrap: break-word;
+            vertical-align: middle;
+            line-height: 1.2;
+            min-width: 85px; 
+            border: 1px solid #5e1689;
         }
+
         th:hover {
             background-color: #4a148c;
         }
-        /* Ikon panah sorting */
-        .sort-icon {
-            display: inline-block;
-            margin-left: 8px;
-            font-size: 12px;
-            width: 12px;
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
+
+        .sort-icon {
+            font-size: 11px;
+            color: #ffd700; /* Warna kuning emas untuk pembeda */
+            min-width: 12px;
+        }
+
         td {
             padding: 10px;
             border: 1px solid #eee;
@@ -161,23 +178,22 @@
 const ChartDataLabels = window.ChartDataLabels;
 let myChart = null;
 let tableData = [];
-let filteredData = []; // Data yang sudah difilter tapi belum disortir
-let currentSort = { column: null, direction: 'asc' }; // Status sortir
+let filteredData = [];
+let currentSort = { column: null, direction: 'asc' };
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Simulasi Fetch Data
     const dummyData = [
-        {"Main Branch": "Medan", "Office": "Medan 1", "Total": 150},
-        {"Main Branch": "Medan", "Office": "Medan 2", "Total": 0},
-        {"Main Branch": "Palembang", "Office": "PLM 1", "Total": 85},
-        {"Main Branch": "Palembang", "Office": "PLM 2", "Total": 200},
-        {"Main Branch": "Lampung", "Office": "LPG 1", "Total": 45}
+        {"Main Branch": "Medan", "Office": "Medan SM Raja", "Total": 150},
+        {"Main Branch": "Medan", "Office": "Medan Marelan", "Total": 0},
+        {"Main Branch": "Palembang", "Office": "PLM Sudirman", "Total": 85},
+        {"Main Branch": "Palembang", "Office": "PLM Kenten", "Total": 200},
+        {"Main Branch": "Lampung", "Office": "LPG Kedaton", "Total": 45}
     ];
 
     fetch('Dataset.json')
         .then(res => res.json())
-        .then(data => {
-            initializeDashboard(data);
-        })
+        .then(data => initializeDashboard(data))
         .catch(err => {
             console.warn("Dataset.json tidak ditemukan, menggunakan data demo.");
             initializeDashboard(dummyData);
@@ -187,21 +203,21 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeDashboard(data) {
     tableData = data;
     
-    // Inisialisasi Header Tabel Sekali saja
     if (data.length > 0) {
+        // Setup Header dengan Wrap Text dan Ikon Sortir
         const tableHead = document.getElementById('tableHead');
         const columns = Object.keys(data[0]);
         tableHead.innerHTML = columns.map(col => `
             <th onclick="handleSort('${col}')">
-                ${col} <span id="icon-${col.replace(/\s+/g, '')}" class="sort-icon">↕</span>
+                <div class="header-content">
+                    <span>${col}</span>
+                    <span id="icon-${col.replace(/\s+/g, '')}" class="sort-icon">↕</span>
+                </div>
             </th>
         `).join('');
         
-        // Populate Filter Options
-        const branches = new Set(data.map(d => d['Main Branch']));
-        const offices = new Set(data.map(d => d['Office']));
-        updateFilterOptions(document.getElementById('BranchFilter'), branches, 'Semua Main Branch');
-        updateFilterOptions(document.getElementById('OfficeFilter'), offices, 'Semua Office');
+        // Update Filter Options
+        updateMainFilters();
     }
 
     document.getElementById('BranchFilter').addEventListener('change', (e) => {
@@ -215,7 +231,6 @@ function initializeDashboard(data) {
 }
 
 function handleSort(columnName) {
-    // Jika kolom yang sama diklik, balikkan arah. Jika beda, mulai dari 'asc'
     if (currentSort.column === columnName) {
         currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
     } else {
@@ -223,10 +238,10 @@ function handleSort(columnName) {
         currentSort.direction = 'asc';
     }
 
-    // Reset semua ikon ke default
+    // Reset Ikon
     document.querySelectorAll('.sort-icon').forEach(span => span.innerText = '↕');
     
-    // Update ikon kolom yang sedang disortir
+    // Set Ikon Aktif
     const iconId = `icon-${columnName.replace(/\s+/g, '')}`;
     document.getElementById(iconId).innerText = currentSort.direction === 'asc' ? '▲' : '▼';
 
@@ -240,12 +255,16 @@ function sortAndRenderTable() {
         let valA = a[currentSort.column];
         let valB = b[currentSort.column];
 
-        // Cek jika angka
-        if (!isNaN(valA) && !isNaN(valB)) {
-            valA = parseFloat(valA);
-            valB = parseFloat(valB);
+        // Penanganan Angka
+        const numA = parseFloat(valA);
+        const numB = parseFloat(valB);
+        if (!isNaN(numA) && !isNaN(numB)) {
+            return currentSort.direction === 'asc' ? numA - numB : numB - numA;
         }
 
+        // Penanganan String
+        valA = valA.toString().toLowerCase();
+        valB = valB.toString().toLowerCase();
         if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
         if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
         return 0;
@@ -266,7 +285,6 @@ function filterAndSearchTable() {
     const officeVal = document.getElementById('OfficeFilter').value;
     const statusVal = document.getElementById('ActivityStatusFilter').value;
 
-    // Filter Data
     filteredData = tableData.filter(row => {
         const matchBranch = !branchVal || row['Main Branch'] === branchVal;
         const matchOffice = !officeVal || row['Office'] === officeVal;
@@ -277,10 +295,8 @@ function filterAndSearchTable() {
         return matchBranch && matchOffice && matchStatus;
     });
 
-    // Update Chart (Chart selalu disortir manual berdasarkan nilai terbesar)
     updateChartFromData(filteredData, branchVal);
     
-    // Render Tabel (Bisa disortir user melalui header)
     if (currentSort.column) {
         sortAndRenderTable();
     } else {
@@ -294,13 +310,9 @@ function updateChartFromData(data, branchVal) {
         officeMap.set(row['Office'], (officeMap.get(row['Office']) || 0) + (parseFloat(row['Total']) || 0));
     });
 
-    let labels = Array.from(officeMap.keys());
-    let values = Array.from(officeMap.values());
-
-    // Sorting chart dari besar ke kecil
-    const combined = labels.map((l, i) => ({l, v: values[i]})).sort((a,b) => b.v - a.v);
-    let finalLabels = combined.map(d => d.l);
-    let finalValues = combined.map(d => d.v);
+    let entries = Array.from(officeMap.entries()).sort((a, b) => b[1] - a[1]);
+    let finalLabels = entries.map(e => e[0]);
+    let finalValues = entries.map(e => e[1]);
 
     if (branchVal && finalValues.length > 0) {
         const total = finalValues.reduce((a, b) => a + b, 0);
@@ -320,19 +332,11 @@ function drawChart(data) {
     }
 
     const barHeight = 35; 
-    const calculatedHeight = (data.labels.length * barHeight) + 60;
-    chartContainer.style.height = calculatedHeight + 'px';
+    chartContainer.style.height = ((data.labels.length * barHeight) + 60) + 'px';
     
     const ctx = document.getElementById('myBarChart').getContext('2d');
     if (myChart) myChart.destroy();
     
-    const staticColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
-    const backgroundColors = data.labels.map((label, index) => {
-        if (label.startsWith('TOTAL')) return '#4E337E'; 
-        if (data.values[index] === 0) return '#D2D2D2';
-        return staticColors[index % staticColors.length];
-    });
-
     myChart = new Chart(ctx, {
         type: 'bar',
         plugins: [ChartDataLabels],
@@ -340,42 +344,31 @@ function drawChart(data) {
             labels: data.labels,
             datasets: [{
                 data: data.values,
-                backgroundColor: backgroundColors,
-                borderWidth: 0,
-                barPercentage: 0.7,
-                categoryPercentage: 0.8
+                backgroundColor: data.labels.map((l, i) => l.startsWith('TOTAL') ? '#4E337E' : (data.values[i] === 0 ? '#D2D2D2' : '#36A2EB')),
+                barPercentage: 0.7
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             indexAxis: 'y',
-            layout: { padding: { right: 60, left: 10 } },
-            scales: {
-                x: { display: false, beginAtZero: true },
-                y: { 
-                    offset: true,
-                    grid: { display: false },
-                    ticks: { 
-                        autoSkip: false,
-                        font: { size: 12, weight: '500' },
-                        padding: 10
-                    }
-                }
-            },
+            scales: { x: { display: false }, y: { grid: { display: false } } },
             plugins: {
                 legend: { display: false },
                 datalabels: {
-                    anchor: 'end',
-                    align: 'right',
-                    offset: 10,
-                    color: '#444',
-                    font: { weight: 'bold' },
+                    anchor: 'end', align: 'right', color: '#444', font: { weight: 'bold' },
                     formatter: (val) => val.toLocaleString()
                 }
             }
         }
     });
+}
+
+function updateMainFilters() {
+    const branches = new Set(tableData.map(d => d['Main Branch']));
+    updateFilterOptions(document.getElementById('BranchFilter'), branches, 'Semua Main Branch');
+    const offices = new Set(tableData.map(d => d['Office']));
+    updateFilterOptions(document.getElementById('OfficeFilter'), offices, 'Semua Office');
 }
 
 function updateFilterOptions(el, set, def) {
@@ -397,7 +390,7 @@ function resetFilter() {
     document.getElementById('ActivityStatusFilter').value = "all";
     currentSort = { column: null, direction: 'asc' };
     document.querySelectorAll('.sort-icon').forEach(span => span.innerText = '↕');
-    updateOfficeFilter("");
+    updateMainFilters();
     filterAndSearchTable();
 }
 
