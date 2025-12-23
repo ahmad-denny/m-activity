@@ -26,7 +26,6 @@
             box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
         }
         
-        /* Tinggi Container Chart dibuat dinamis via JS */
         #chart-container {
             position: relative;
             width: 100%;
@@ -52,13 +51,6 @@
             border-radius: 10px;
             margin-bottom: 20px;
             border: 1px solid #e9ecef;
-        }
-
-        #time-date {
-            font-size: 14px;
-            color: #666;
-            font-weight: 600;
-            margin-left: auto;
         }
 
         select {
@@ -102,6 +94,19 @@
             padding: 12px;
             position: sticky;
             top: 0;
+            cursor: pointer; /* Menandakan bisa diklik */
+            user-select: none;
+            white-space: nowrap;
+        }
+        th:hover {
+            background-color: #4a148c;
+        }
+        /* Ikon panah sorting */
+        .sort-icon {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 12px;
+            width: 12px;
         }
         td {
             padding: 10px;
@@ -112,7 +117,6 @@
 
         @media (max-width: 768px) {
             .filter-container { flex-direction: column; align-items: stretch; }
-            #time-date { margin: 10px auto; }
         }
     </style>
 </head>
@@ -137,9 +141,6 @@
         <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
         <button class="btn back-btn" onclick="openPage()">Back</button>
         <button class="btn print-btn" onclick="printTable()">Print</button>
-<!--
-        <div id="time-date"></div>
--->
     </div>
 
     <div id="chart-container">
@@ -160,13 +161,10 @@
 const ChartDataLabels = window.ChartDataLabels;
 let myChart = null;
 let tableData = [];
-let allOffices = new Set();
-let allBranches = new Set();
-let officeActivityTotals = new Map(); 
+let filteredData = []; // Data yang sudah difilter tapi belum disortir
+let currentSort = { column: null, direction: 'asc' }; // Status sortir
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Simulasi Fetch Data - Ganti dengan fetch('Dataset.json') jika dijalankan di server
-    // Contoh Data Dummy untuk demo:
     const dummyData = [
         {"Main Branch": "Medan", "Office": "Medan 1", "Total": 150},
         {"Main Branch": "Medan", "Office": "Medan 2", "Total": 0},
@@ -175,7 +173,6 @@ document.addEventListener('DOMContentLoaded', function() {
         {"Main Branch": "Lampung", "Office": "LPG 1", "Total": 45}
     ];
 
-    // Gunakan fetch asli Anda jika sudah siap
     fetch('Dataset.json')
         .then(res => res.json())
         .then(data => {
@@ -185,14 +182,28 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn("Dataset.json tidak ditemukan, menggunakan data demo.");
             initializeDashboard(dummyData);
         });
-        
-    updateTimeDate();
-    setInterval(updateTimeDate, 1000);
 });
 
 function initializeDashboard(data) {
-    populateTable(data);
+    tableData = data;
     
+    // Inisialisasi Header Tabel Sekali saja
+    if (data.length > 0) {
+        const tableHead = document.getElementById('tableHead');
+        const columns = Object.keys(data[0]);
+        tableHead.innerHTML = columns.map(col => `
+            <th onclick="handleSort('${col}')">
+                ${col} <span id="icon-${col.replace(/\s+/g, '')}" class="sort-icon">↕</span>
+            </th>
+        `).join('');
+        
+        // Populate Filter Options
+        const branches = new Set(data.map(d => d['Main Branch']));
+        const offices = new Set(data.map(d => d['Office']));
+        updateFilterOptions(document.getElementById('BranchFilter'), branches, 'Semua Main Branch');
+        updateFilterOptions(document.getElementById('OfficeFilter'), offices, 'Semua Office');
+    }
+
     document.getElementById('BranchFilter').addEventListener('change', (e) => {
         updateOfficeFilter(e.target.value);
         filterAndSearchTable();
@@ -203,11 +214,101 @@ function initializeDashboard(data) {
     filterAndSearchTable();
 }
 
-function updateTimeDate() {
-    const now = new Date();
-    const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: "2-digit" });
-    const date = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-    document.getElementById("time-date").innerHTML = `${date} | ${time}`;
+function handleSort(columnName) {
+    // Jika kolom yang sama diklik, balikkan arah. Jika beda, mulai dari 'asc'
+    if (currentSort.column === columnName) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSort.column = columnName;
+        currentSort.direction = 'asc';
+    }
+
+    // Reset semua ikon ke default
+    document.querySelectorAll('.sort-icon').forEach(span => span.innerText = '↕');
+    
+    // Update ikon kolom yang sedang disortir
+    const iconId = `icon-${columnName.replace(/\s+/g, '')}`;
+    document.getElementById(iconId).innerText = currentSort.direction === 'asc' ? '▲' : '▼';
+
+    sortAndRenderTable();
+}
+
+function sortAndRenderTable() {
+    if (!currentSort.column) return;
+
+    filteredData.sort((a, b) => {
+        let valA = a[currentSort.column];
+        let valB = b[currentSort.column];
+
+        // Cek jika angka
+        if (!isNaN(valA) && !isNaN(valB)) {
+            valA = parseFloat(valA);
+            valB = parseFloat(valB);
+        }
+
+        if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    renderTableBody(filteredData);
+}
+
+function renderTableBody(data) {
+    const tableBody = document.getElementById('tableBody');
+    tableBody.innerHTML = data.map(row => 
+        `<tr>${Object.values(row).map(v => `<td>${v}</td>`).join('')}</tr>`
+    ).join('');
+}
+
+function filterAndSearchTable() {
+    const branchVal = document.getElementById('BranchFilter').value;
+    const officeVal = document.getElementById('OfficeFilter').value;
+    const statusVal = document.getElementById('ActivityStatusFilter').value;
+
+    // Filter Data
+    filteredData = tableData.filter(row => {
+        const matchBranch = !branchVal || row['Main Branch'] === branchVal;
+        const matchOffice = !officeVal || row['Office'] === officeVal;
+        const total = parseFloat(row['Total']) || 0;
+        const matchStatus = statusVal === 'all' || 
+                           (statusVal === 'active' && total > 0) || 
+                           (statusVal === 'inactive' && total === 0);
+        return matchBranch && matchOffice && matchStatus;
+    });
+
+    // Update Chart (Chart selalu disortir manual berdasarkan nilai terbesar)
+    updateChartFromData(filteredData, branchVal);
+    
+    // Render Tabel (Bisa disortir user melalui header)
+    if (currentSort.column) {
+        sortAndRenderTable();
+    } else {
+        renderTableBody(filteredData);
+    }
+}
+
+function updateChartFromData(data, branchVal) {
+    const officeMap = new Map();
+    data.forEach(row => {
+        officeMap.set(row['Office'], (officeMap.get(row['Office']) || 0) + (parseFloat(row['Total']) || 0));
+    });
+
+    let labels = Array.from(officeMap.keys());
+    let values = Array.from(officeMap.values());
+
+    // Sorting chart dari besar ke kecil
+    const combined = labels.map((l, i) => ({l, v: values[i]})).sort((a,b) => b.v - a.v);
+    let finalLabels = combined.map(d => d.l);
+    let finalValues = combined.map(d => d.v);
+
+    if (branchVal && finalValues.length > 0) {
+        const total = finalValues.reduce((a, b) => a + b, 0);
+        finalLabels.unshift(`TOTAL ${branchVal.toUpperCase()}`);
+        finalValues.unshift(total);
+    }
+
+    drawChart({ labels: finalLabels, values: finalValues });
 }
 
 function drawChart(data) {
@@ -218,7 +319,6 @@ function drawChart(data) {
         return; 
     }
 
-    // --- LOGIKA DYNAMIC HEIGHT (Penting agar label sejajar) ---
     const barHeight = 35; 
     const calculatedHeight = (data.labels.length * barHeight) + 60;
     chartContainer.style.height = calculatedHeight + 'px';
@@ -227,7 +327,6 @@ function drawChart(data) {
     if (myChart) myChart.destroy();
     
     const staticColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
-
     const backgroundColors = data.labels.map((label, index) => {
         if (label.startsWith('TOTAL')) return '#4E337E'; 
         if (data.values[index] === 0) return '#D2D2D2';
@@ -279,28 +378,6 @@ function drawChart(data) {
     });
 }
 
-function populateTable(data) {
-    const tableHead = document.getElementById('tableHead');
-    const tableBody = document.getElementById('tableBody');
-    tableData = data;
-
-    if (data.length > 0) {
-        // Headers
-        tableHead.innerHTML = Object.keys(data[0]).map(h => `<th>${h}</th>`).join('');
-        
-        // Data Process
-        data.forEach(row => {
-            allOffices.add(row['Office']);
-            allBranches.add(row['Main Branch']);
-            const val = parseFloat(row['Total']) || 0;
-            officeActivityTotals.set(row['Office'], (officeActivityTotals.get(row['Office']) || 0) + val);
-        });
-
-        updateFilterOptions(document.getElementById('BranchFilter'), allBranches, 'Semua Main Branch');
-        updateFilterOptions(document.getElementById('OfficeFilter'), allOffices, 'Semua Office');
-    }
-}
-
 function updateFilterOptions(el, set, def) {
     el.innerHTML = `<option value="">${def}</option>` + 
         Array.from(set).sort().map(v => `<option value="${v}">${v}</option>`).join('');
@@ -314,75 +391,18 @@ function updateOfficeFilter(branch) {
     updateFilterOptions(document.getElementById('OfficeFilter'), relevant, 'Semua Office');
 }
 
-function filterAndSearchTable() {
-    const branchVal = document.getElementById('BranchFilter').value;
-    const officeVal = document.getElementById('OfficeFilter').value;
-    const statusVal = document.getElementById('ActivityStatusFilter').value;
-
-    const filtered = tableData.filter(row => {
-        return (!branchVal || row['Main Branch'] === branchVal) && 
-               (!officeVal || row['Office'] === officeVal);
-    });
-
-    // Chart Logic
-    let labels = [], values = [];
-    const officeMap = new Map();
-
-    filtered.forEach(row => {
-        officeMap.set(row['Office'], (officeMap.get(row['Office']) || 0) + (parseFloat(row['Total']) || 0));
-    });
-
-    officeMap.forEach((val, key) => {
-        if (statusVal === 'all' || (statusVal === 'active' && val > 0) || (statusVal === 'inactive' && val === 0)) {
-            labels.push(key);
-            values.push(val);
-        }
-    });
-
-    // Sorting (Besar ke Kecil)
-    const sorted = labels.map((l, i) => ({l, v: values[i]})).sort((a,b) => b.v - a.v);
-    
-    let finalLabels = sorted.map(d => d.l);
-    let finalValues = sorted.map(d => d.v);
-
-    if (branchVal && !officeVal) {
-        const total = finalValues.reduce((a, b) => a + b, 0);
-        finalLabels.unshift(`TOTAL ${branchVal.toUpperCase()}`);
-        finalValues.unshift(total);
-    }
-
-    drawChart({ labels: finalLabels, values: finalValues });
-
-    // Update Table
-    const tableBody = document.getElementById('tableBody');
-    tableBody.innerHTML = filtered.map(row => 
-        `<tr>${Object.values(row).map(v => `<td>${v}</td>`).join('')}</tr>`
-    ).join('');
-}
-
 function resetFilter() {
     document.getElementById('BranchFilter').value = "";
     document.getElementById('OfficeFilter').value = "";
     document.getElementById('ActivityStatusFilter').value = "all";
+    currentSort = { column: null, direction: 'asc' };
+    document.querySelectorAll('.sort-icon').forEach(span => span.innerText = '↕');
     updateOfficeFilter("");
     filterAndSearchTable();
 }
 
-function printTable() {
-    window.print();
-}
-
-function openPage() {
-    window.location.href = 'https://bmi-apps.github.io/regionsumatera/';
-}
+function printTable() { window.print(); }
+function openPage() { window.location.href = 'https://bmi-apps.github.io/regionsumatera/'; }
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
