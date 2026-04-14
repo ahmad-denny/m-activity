@@ -218,9 +218,18 @@ function filterAndRender() {
     let chartLabels = finalChartEntries.map(e => e[0]);
     let chartValues = finalChartEntries.map(e => Math.round(e[1] / 1000000));
 
+    // LOGIKA PERBAIKAN: Menambahkan Bar Total
+    // 1. Selalu tambahkan Total Region Sumatera di paling atas
     const grandTotalSumatera = tableData.reduce((acc, curr) => acc + cleanNumber(curr['Total']), 0);
     chartLabels.unshift("TOTAL REGION SUMATERA");
     chartValues.unshift(Math.round(grandTotalSumatera / 1000000));
+
+    // 2. Jika Main Branch dipilih, sisipkan Total Branch tersebut di bawah Total Sumatera
+    if (branchVal && !officeVal) {
+        const branchTotal = filtered.reduce((acc, curr) => acc + cleanNumber(curr['Total']), 0);
+        chartLabels.splice(1, 0, "TOTAL " + branchVal.toUpperCase());
+        chartValues.splice(1, 0, Math.round(branchTotal / 1000000));
+    }
 
     drawChart(chartLabels, chartValues);
 
