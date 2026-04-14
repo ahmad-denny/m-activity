@@ -6,110 +6,26 @@
     <title>M-Booking Performance Region Sumatera</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
 
     <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            text-align: center;
-            background-color: #f0f2f5;
-            padding: 20px;
-            margin: 0;
-        }
-        .container {
-            width: 95%;
-            max-width: 1200px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
-        }
-        
-        #chart-container {
-            position: relative;
-            width: 100%;
-            margin: 20px auto;
-            min-height: 300px; 
-        }
-
-        h2 {
-            color: white;
-            background: linear-gradient(90deg, #6a1b9a, #8e24aa);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 0;
-        }
-
-        .filter-container {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #e9ecef;
-        }
-
-        select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            outline: none;
-            flex: 1;
-            min-width: 150px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            color: white;
-        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; margin: 0; }
+        .container { width: 95%; max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08); }
+        #chart-container { position: relative; width: 100%; margin: 20px auto; min-height: 300px; }
+        h2 { color: white; background: linear-gradient(90deg, #6a1b9a, #8e24aa); padding: 15px; border-radius: 8px; margin-top: 0; }
+        .filter-container { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 20px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e9ecef; }
+        select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; flex: 1; min-width: 150px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; color: white; }
         .reset-btn { background: #28a745; }
-        .reset-btn:hover { background: #218838; }
         .back-btn { background: #dc3545; }
-        .back-btn:hover { background: #c82333; }
         .print-btn { background: #6f42c1; }
         .export-btn { background: #f39c12; }
-        
-        .table-container {
-            overflow-x: auto;
-            margin-top: 20px;
-            border-radius: 8px;
-            border: 1px solid #eee;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        th {
-            background-color: #6a1b9a;
-            color: white;
-            padding: 12px 8px;
-            position: sticky;
-            top: 0;
-            border: 1px solid #5e1689;
-        }
-
-        td {
-            padding: 10px;
-            border: 1px solid #eee;
-            text-align: left;
-        }
+        .table-container { overflow-x: auto; margin-top: 20px; border-radius: 8px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background-color: #6a1b9a; color: white; padding: 12px 8px; position: sticky; top: 0; border: 1px solid #5e1689; }
+        td { padding: 10px; border: 1px solid #eee; text-align: left; }
         tr:nth-child(even) { background-color: #f9f9f9; }
-
-        @media screen and (max-width: 768px) {
-            .filter-container { flex-direction: column; align-items: stretch; }
-            select, .btn { width: 100%; }
-        }
+        @media screen and (max-width: 768px) { .filter-container { flex-direction: column; align-items: stretch; } select, .btn { width: 100%; } }
     </style>
 </head>
 <body>
@@ -155,7 +71,6 @@ const ChartDataLabels = window.ChartDataLabels;
 let myChart = null;
 let tableData = [];
 
-// --- FUNGSI FIX ANGKA: Menghapus koma ribuan ---
 function cleanNumber(val) {
     if (typeof val === 'number') return val;
     if (!val || val === "-" || val === "") return 0;
@@ -177,22 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initializeDashboard() {
     if (tableData.length === 0) return;
-
-    // Build Table Header
     const columns = Object.keys(tableData[0]);
     document.getElementById('tableHead').innerHTML = columns.map(col => `<th>${col}</th>`).join('');
-
-    // Init Filters
     updateMainFilters();
-
-    // Event Listeners
     document.getElementById('BranchFilter').addEventListener('change', (e) => {
         updateOfficeFilter(e.target.value);
         filterAndRender();
     });
     document.getElementById('OfficeFilter').addEventListener('change', filterAndRender);
     document.getElementById('ActivityStatusFilter').addEventListener('change', filterAndRender);
-    
     filterAndRender();
 }
 
@@ -201,7 +109,6 @@ function updateMainFilters() {
     const branchSelect = document.getElementById('BranchFilter');
     branchSelect.innerHTML = '<option value="">Semua Main Branch</option>' + 
         branches.map(v => `<option value="${v}">${v}</option>`).join('');
-    
     updateOfficeFilter("");
 }
 
@@ -209,7 +116,6 @@ function updateOfficeFilter(branch) {
     const officeSelect = document.getElementById('OfficeFilter');
     const filteredData = tableData.filter(d => !branch || d['Main Branch'] === branch);
     const offices = [...new Set(filteredData.map(d => d['Office']))].sort();
-    
     officeSelect.innerHTML = '<option value="">Semua Office</option>' + 
         offices.map(v => `<option value="${v}">${v}</option>`).join('');
 }
@@ -229,7 +135,6 @@ function filterAndRender() {
         return matchBranch && matchOffice && matchStatus;
     });
 
-    // Update Chart
     const officeMap = {};
     filtered.forEach(row => {
         const val = cleanNumber(row['Total']);
@@ -246,8 +151,6 @@ function filterAndRender() {
     }
 
     drawChart(labels, values);
-    
-    // Update Table
     document.getElementById('tableBody').innerHTML = filtered.map(row => 
         `<tr>${Object.values(row).map(v => `<td>${v}</td>`).join('')}</tr>`
     ).join('');
@@ -256,9 +159,7 @@ function filterAndRender() {
 function drawChart(labels, values) {
     const ctx = document.getElementById('myBarChart').getContext('2d');
     if (myChart) myChart.destroy();
-
     document.getElementById('chart-container').style.height = (labels.length * 40 + 120) + "px";
-
     myChart = new Chart(ctx, {
         type: 'bar',
         plugins: [ChartDataLabels],
@@ -296,14 +197,18 @@ function resetFilter() {
 }
 
 function printTable() { window.print(); }
+
 function exportToExcel() {
+    if (typeof XLSX === 'undefined') {
+        alert("Library Excel belum siap. Pastikan koneksi internet aktif.");
+        return;
+    }
     const table = document.getElementById("dataTable");
-    const visibleRows = Array.from(table.rows).filter(r => r.style.display !== "none");
-    const data = visibleRows.map(row => Array.from(row.cells).filter((_, i) => i !== 1).map(c => c.textContent.trim()));
-    const ws = XLSX.utils.aoa_to_sheet(data);
+    const ws = XLSX.utils.table_to_sheet(table);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Booking");
-    XLSX.writeFile(wb, "Booking_Performance_Sumatera.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Booking Performance");
+    const branchName = document.getElementById('BranchFilter').value || "All_Region";
+    XLSX.writeFile(wb, `Booking_${branchName}.xlsx`);
 }
 
 function openPage() { window.location.href = 'https://m-direct.vercel.app/'; }
