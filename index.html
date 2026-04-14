@@ -296,7 +296,7 @@ function drawChart(labels, values) {
             plugins: {
                 legend: { display: false },
                 datalabels: {
-                    anchor: 'end', align: 'right', offset: 5, color: '#000',
+                    display : false, anchor: 'end', align: 'right', offset: 5, color: '#000',
                     font: (context) => {
                         const isTotal = context.chart.data.labels[context.dataIndex].toString().includes('TOTAL');
                         return { weight: isTotal ? 'bold' : 'normal', size: isTotal ? 13 : 11 };
