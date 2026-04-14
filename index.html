@@ -88,7 +88,6 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
-            table-layout: auto;
         }
 
         th {
@@ -98,31 +97,7 @@
             position: sticky;
             top: 0;
             cursor: pointer;
-            user-select: none;
-            /* Wrap Text Settings */
-            white-space: normal;
-            word-wrap: break-word;
-            vertical-align: middle;
-            line-height: 1.2;
-            min-width: 85px; 
             border: 1px solid #5e1689;
-        }
-
-        th:hover {
-            background-color: #4a148c;
-        }
-
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-
-        .sort-icon {
-            font-size: 11px;
-            color: #ffd700; /* Warna kuning emas untuk pembeda */
-            min-width: 12px;
         }
 
         td {
@@ -133,14 +108,8 @@
         tr:nth-child(even) { background-color: #f9f9f9; }
 
         @media screen and (max-width: 768px) {
-            .filter-container {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            input, select, .reset-btn, .back-btn, .print-btn {
-                width: 100%;
-                max-width: none;
-            }
+            .filter-container { flex-direction: column; align-items: stretch; }
+            select, .btn { width: 100%; }
         }
     </style>
 </head>
@@ -165,7 +134,6 @@
         <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
         <button class="btn print-btn" onclick="printTable()">Print</button>
         <button class="btn back-btn" onclick="openPage()">M-Direct</button>
-        
     </div>
 
     <div id="chart-container">
@@ -189,42 +157,45 @@ let tableData = [];
 let filteredData = [];
 let currentSort = { column: null, direction: 'asc' };
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Simulasi Fetch Data
-    const dummyData = [
-        {"Main Branch": "Medan", "Office": "Medan SM Raja", "Total": 150},
-        {"Main Branch": "Medan", "Office": "Medan Marelan", "Total": 0},
-        {"Main Branch": "Palembang", "Office": "PLM Sudirman", "Total": 85},
-        {"Main Branch": "Palembang", "Office": "PLM Kenten", "Total": 200},
-        {"Main Branch": "Lampung", "Office": "LPG Kedaton", "Total": 45}
-    ];
+// --- FUNGSI FIX: Membersihkan angka dari karakter non-numerik ---
+function cleanNumber(val) {
+    if (typeof val === 'number') return val;
+    if (!val || val === "-" || val === "") return 0;
+    // Hapus titik ribuan, ganti koma desimal jadi titik, hapus spasi/huruf
+    let cleaned = val.toString().replace(/\./g, '').replace(/,/g, '.').replace(/[^0-9.-]+/g, "");
+    return parseFloat(cleaned) || 0;
+}
 
+document.addEventListener('DOMContentLoaded', function() {
     fetch('Dataset.json')
         .then(res => res.json())
         .then(data => initializeDashboard(data))
         .catch(err => {
             console.warn("Dataset.json tidak ditemukan, menggunakan data demo.");
+            // Data demo ditingkatkan untuk testing Bengkulu 2.2M
+            const dummyData = [
+                {"Main Branch": "Bengkulu", "Office": "Bengkulu KM 6", "Total": "1.100.000"},
+                {"Main Branch": "Bengkulu", "Office": "Bengkulu Panorama", "Total": "1.100.000"},
+                {"Main Branch": "Medan", "Office": "Medan SM Raja", "Total": "150"},
+                {"Main Branch": "Palembang", "Office": "PLM Sudirman", "Total": "85"}
+            ];
             initializeDashboard(dummyData);
         });
 });
 
 function initializeDashboard(data) {
     tableData = data;
-    
     if (data.length > 0) {
-        // Setup Header dengan Wrap Text dan Ikon Sortir
         const tableHead = document.getElementById('tableHead');
         const columns = Object.keys(data[0]);
         tableHead.innerHTML = columns.map(col => `
             <th onclick="handleSort('${col}')">
-                <div class="header-content">
+                <div style="display:flex; justify-content:center; align-items:center; gap:5px;">
                     <span>${col}</span>
-                    <span id="icon-${col.replace(/\s+/g, '')}" class="sort-icon">↕</span>
+                    <span id="icon-${col.replace(/\s+/g, '')}" style="font-size:10px">↕</span>
                 </div>
             </th>
         `).join('');
-        
-        // Update Filter Options
         updateMainFilters();
     }
 
@@ -238,56 +209,6 @@ function initializeDashboard(data) {
     filterAndSearchTable();
 }
 
-function handleSort(columnName) {
-    if (currentSort.column === columnName) {
-        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-    } else {
-        currentSort.column = columnName;
-        currentSort.direction = 'asc';
-    }
-
-    // Reset Ikon
-    document.querySelectorAll('.sort-icon').forEach(span => span.innerText = '↕');
-    
-    // Set Ikon Aktif
-    const iconId = `icon-${columnName.replace(/\s+/g, '')}`;
-    document.getElementById(iconId).innerText = currentSort.direction === 'asc' ? '▲' : '▼';
-
-    sortAndRenderTable();
-}
-
-function sortAndRenderTable() {
-    if (!currentSort.column) return;
-
-    filteredData.sort((a, b) => {
-        let valA = a[currentSort.column];
-        let valB = b[currentSort.column];
-
-        // Penanganan Angka
-        const numA = parseFloat(valA);
-        const numB = parseFloat(valB);
-        if (!isNaN(numA) && !isNaN(numB)) {
-            return currentSort.direction === 'asc' ? numA - numB : numB - numA;
-        }
-
-        // Penanganan String
-        valA = valA.toString().toLowerCase();
-        valB = valB.toString().toLowerCase();
-        if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
-        if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    renderTableBody(filteredData);
-}
-
-function renderTableBody(data) {
-    const tableBody = document.getElementById('tableBody');
-    tableBody.innerHTML = data.map(row => 
-        `<tr>${Object.values(row).map(v => `<td>${v}</td>`).join('')}</tr>`
-    ).join('');
-}
-
 function filterAndSearchTable() {
     const branchVal = document.getElementById('BranchFilter').value;
     const officeVal = document.getElementById('OfficeFilter').value;
@@ -296,56 +217,43 @@ function filterAndSearchTable() {
     filteredData = tableData.filter(row => {
         const matchBranch = !branchVal || row['Main Branch'] === branchVal;
         const matchOffice = !officeVal || row['Office'] === officeVal;
-        const total = parseFloat(row['Total']) || 0;
+        const totalNum = cleanNumber(row['Total']);
         const matchStatus = statusVal === 'all' || 
-                           (statusVal === 'active' && total > 0) || 
-                           (statusVal === 'inactive' && total === 0);
+                           (statusVal === 'active' && totalNum > 0) || 
+                           (statusVal === 'inactive' && totalNum === 0);
         return matchBranch && matchOffice && matchStatus;
     });
 
     updateChartFromData(filteredData, branchVal);
-    
-    if (currentSort.column) {
-        sortAndRenderTable();
-    } else {
-        renderTableBody(filteredData);
-    }
+    renderTableBody(filteredData);
 }
 
-function capitalizeWords(str) {
-  return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-}
-    
 function updateChartFromData(data, branchVal) {
     const officeMap = new Map();
+    
     data.forEach(row => {
-        officeMap.set(row['Office'], (officeMap.get(row['Office']) || 0) + (parseFloat(row['Total']) || 0));
+        const officeName = row['Office'];
+        const val = cleanNumber(row['Total']);
+        officeMap.set(officeName, (officeMap.get(officeName) || 0) + val);
     });
 
     let entries = Array.from(officeMap.entries()).sort((a, b) => b[1] - a[1]);
-    let finalLabels = entries.map(e => e[0]);
-    let finalValues = entries.map(e => e[1]);
+    let labels = entries.map(e => e[0]);
+    let values = entries.map(e => e[1]);
 
-    if (branchVal && finalValues.length > 0) {
-        const total = finalValues.reduce((a, b) => a + b, 0);
-//        finalLabels.unshift(`Total ${branchVal.toUpperCase()}`);
-        finalLabels.unshift(`Total ${capitalizeWords(branchVal)}`);
-        finalValues.unshift(total);
+    if (branchVal && values.length > 0) {
+        const totalSum = values.reduce((a, b) => a + b, 0);
+        labels.unshift(`TOTAL ${branchVal.toUpperCase()}`);
+        values.unshift(totalSum);
     }
 
-    drawChart({ labels: finalLabels, values: finalValues });
+    drawChart({ labels, values });
 }
 
 function drawChart(data) {
     const chartContainer = document.getElementById('chart-container');
-    if (!data || data.labels.length === 0) {
-        if (myChart) myChart.destroy();
-        chartContainer.style.height = '300px';
-        return; 
-    }
-
-    const barHeight = 35; 
-    chartContainer.style.height = ((data.labels.length * barHeight) + 60) + 'px';
+    const barHeight = 40; 
+    chartContainer.style.height = ((data.labels.length * barHeight) + 100) + 'px';
     
     const ctx = document.getElementById('myBarChart').getContext('2d');
     if (myChart) myChart.destroy();
@@ -357,43 +265,45 @@ function drawChart(data) {
             labels: data.labels,
             datasets: [{
                 data: data.values,
-                backgroundColor: data.labels.map((l, i) => l.startsWith('TOTAL') ? '#4E337E' : (data.values[i] === 0 ? '#D2D2D2' : '#36A2EB')),
-                barPercentage: 0.7
+                backgroundColor: data.labels.map(l => l.includes('TOTAL') ? '#4E337E' : '#36A2EB'),
+                barPercentage: 0.8
             }]
         },
         options: {
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            indexAxis: 'y',
             scales: { x: { display: false }, y: { grid: { display: false } } },
             plugins: {
                 legend: { display: false },
                 datalabels: {
-                    anchor: 'center', align: 'right', color: 'white', font: { weight: 'bold' },
-                    formatter: (val) => val.toLocaleString()
+                    anchor: 'end', align: 'right', color: '#444', font: { weight: 'bold' },
+                    formatter: (val) => val.toLocaleString('id-ID')
                 }
             }
         }
     });
 }
 
-function updateMainFilters() {
-    const branches = new Set(tableData.map(d => d['Main Branch']));
-    updateFilterOptions(document.getElementById('BranchFilter'), branches, 'Semua Main Branch');
-    const offices = new Set(tableData.map(d => d['Office']));
-    updateFilterOptions(document.getElementById('OfficeFilter'), offices, 'Semua Office');
+function renderTableBody(data) {
+    const tableBody = document.getElementById('tableBody');
+    tableBody.innerHTML = data.map(row => 
+        `<tr>${Object.values(row).map(v => `<td>${v}</td>`).join('')}</tr>`
+    ).join('');
 }
 
-function updateFilterOptions(el, set, def) {
+function updateMainFilters() {
+    const branches = [...new Set(tableData.map(d => d['Main Branch']))];
+    updateFilterOptions(document.getElementById('BranchFilter'), branches, 'Semua Main Branch');
+}
+
+function updateFilterOptions(el, items, def) {
     el.innerHTML = `<option value="">${def}</option>` + 
-        Array.from(set).sort().map(v => `<option value="${v}">${v}</option>`).join('');
+        items.sort().map(v => `<option value="${v}">${v}</option>`).join('');
 }
 
 function updateOfficeFilter(branch) {
-    const relevant = new Set();
-    tableData.forEach(row => {
-        if (!branch || row['Main Branch'] === branch) relevant.add(row['Office']);
-    });
+    const relevant = [...new Set(tableData.filter(d => !branch || d['Main Branch'] === branch).map(d => d['Office']))];
     updateFilterOptions(document.getElementById('OfficeFilter'), relevant, 'Semua Office');
 }
 
@@ -401,20 +311,26 @@ function resetFilter() {
     document.getElementById('BranchFilter').value = "";
     document.getElementById('OfficeFilter').value = "";
     document.getElementById('ActivityStatusFilter').value = "all";
-    currentSort = { column: null, direction: 'asc' };
-    document.querySelectorAll('.sort-icon').forEach(span => span.innerText = '↕');
     updateMainFilters();
     filterAndSearchTable();
 }
 
 function printTable() { window.print(); }
 function openPage() { window.location.href = 'https://m-direct.vercel.app/'; }
+
+function handleSort(col) {
+    currentSort.direction = (currentSort.column === col && currentSort.direction === 'asc') ? 'desc' : 'asc';
+    currentSort.column = col;
+    
+    filteredData.sort((a, b) => {
+        let valA = cleanNumber(a[col]) || a[col].toString().toLowerCase();
+        let valB = cleanNumber(b[col]) || b[col].toString().toLowerCase();
+        if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+    renderTableBody(filteredData);
+}
 </script>
 </body>
 </html>
-
-
-
-
-
-
