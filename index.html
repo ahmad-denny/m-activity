@@ -35,6 +35,11 @@
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { background-color: #6a1b9a; color: white; padding: 12px 8px; position: sticky; top: 0; border: 1px solid #5e1689; }
         td { padding: 10px; border: 1px solid #eee; text-align: left; }
+        
+        /* Clickable Columns */
+        td.clickable { color: #6a1b9a; cursor: pointer; text-decoration: underline; font-weight: 500; }
+        td.clickable:hover { background-color: #f3e5f5; color: #8e24aa; }
+
         .text-right { text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9f9f9; }
 
@@ -76,7 +81,7 @@ const ChartDataLabels = window.ChartDataLabels;
 let myChart = null;
 let tableData = [];
 
-// Helper: Bersihkan string angka (koma) agar jadi float murni
+// Helper: Bersihkan string angka agar jadi float murni
 function cleanNumber(val) {
     if (typeof val === 'number') return val;
     if (!val || val === "-" || val === "") return 0;
@@ -131,6 +136,17 @@ function updateOfficeFilter(branch) {
         offices.map(v => `<option value="${v}">${v}</option>`).join('');
 }
 
+// FUNGSI UNTUK KLIK DI TABEL (FILTER OTOMATIS)
+function clickToFilter(filterId, value) {
+    const filterElem = document.getElementById(filterId);
+    if (filterElem) {
+        filterElem.value = value;
+        if (filterId === 'BranchFilter') updateOfficeFilter(value);
+        filterAndRender();
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll ke atas agar grafik terlihat
+    }
+}
+
 function filterAndRender() {
     const branchVal = document.getElementById('BranchFilter').value;
     const officeVal = document.getElementById('OfficeFilter').value;
@@ -164,11 +180,19 @@ function filterAndRender() {
 
     drawChart(labels, values);
 
-    // Update Table
+    // Update Table dengan kolom yang bisa diklik
     const tableBody = document.getElementById('tableBody');
     tableBody.innerHTML = filtered.map(row => {
         let cells = Object.entries(row).map(([key, val]) => {
             const isNumber = ["TOTAL", "EMAS", "MULTIGUNA", "PROHAJJ", "KPR", "NON CONSUMER"].includes(key.toUpperCase());
+            
+            if (key === "Main Branch") {
+                return `<td class="clickable" onclick="clickToFilter('BranchFilter', '${val}')">${val}</td>`;
+            }
+            if (key === "Office") {
+                return `<td class="clickable" onclick="clickToFilter('OfficeFilter', '${val}')">${val}</td>`;
+            }
+            
             return isNumber ? `<td class="text-right">${formatIndo(val)}</td>` : `<td>${val}</td>`;
         }).join('');
         return `<tr>${cells}</tr>`;
@@ -210,45 +234,32 @@ function drawChart(labels, values) {
 
 async function exportToExcel() {
     if (typeof ExcelJS === 'undefined') {
-        alert("Library ExcelJS belum terload. Periksa koneksi internet.");
+        alert("Library ExcelJS belum terload.");
         return;
     }
-
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Booking Performance');
-
     const table = document.getElementById("dataTable");
-    
-    // 1. Ambil Header
     const headerRow = Array.from(table.tHead.rows[0].cells).map(cell => cell.innerText);
     const excelHeader = worksheet.addRow(headerRow);
 
-    // Styling Header
     excelHeader.eachCell((cell) => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
         cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
         cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        cell.border = {
-            top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}
-        };
+        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
     });
 
-    // 2. Ambil Data
     const bodyRows = Array.from(table.tBodies[0].rows);
     bodyRows.forEach(row => {
         const rowData = Array.from(row.cells).map(cell => cell.innerText);
         const newRow = worksheet.addRow(rowData);
-
         newRow.eachCell((cell, colNumber) => {
-            cell.border = {
-                top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}
-            };
-            // Rata kanan untuk kolom angka (index > 2)
+            cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
             if (colNumber > 2) cell.alignment = { horizontal: 'right' };
         });
     });
 
-    // 3. Auto-fit kolom
     worksheet.columns.forEach(column => {
         let maxLen = 0;
         column.eachCell({ includeEmpty: true }, (cell) => {
@@ -258,7 +269,6 @@ async function exportToExcel() {
         column.width = maxLen + 5;
     });
 
-    // 4. Save
     const branch = document.getElementById('BranchFilter').value || "Sumatera";
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), `Booking_Performance_${branch}.xlsx`);
