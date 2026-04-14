@@ -229,7 +229,7 @@ function drawChart(labels, values) {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Performance (Jutaan)',
+                label: 'Total Booking dlm jutaan',
                 data: values,
                 backgroundColor: labels.map(l => l.includes('TOTAL') ? '#4E337E' : '#36A2EB'),
                 barPercentage: 0.7
@@ -243,7 +243,7 @@ function drawChart(labels, values) {
             scales: { 
                 x: { 
                     display: true, 
-                    title: { display: true, text: 'Dalam Jutaan Rupiah', font: { weight: 'bold' } } 
+                    title: { display: true, text: 'Jutaan Rupiah', font: { weight: 'bold' } } 
                 }, 
                 y: { grid: { display: false } } 
             },
