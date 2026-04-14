@@ -7,14 +7,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        .container { background: white; padding: 20px; border-radius: 12px; max-width: 1200px; margin: auto; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; padding: 20px; margin: 0; }
+        .container { background: white; padding: 20px; border-radius: 12px; max-width: 1200px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: white; background: linear-gradient(90deg, #6a1b9a, #8e24aa); padding: 15px; border-radius: 8px; text-align: center; }
+        .filter-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        select { padding: 10px; border-radius: 5px; border: 1px solid #ccc; flex: 1; min-width: 150px; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; background: #28a745; color: white; }
+        button:hover { background: #218838; }
         #chart-container { position: relative; width: 100%; margin-top: 20px; }
-        .filter-container { display: flex; gap: 10px; margin-bottom: 20px; }
-        select { padding: 10px; border-radius: 5px; border: 1px solid #ccc; flex: 1; }
-        .table-container { margin-top: 20px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background: #6a1b9a; color: white; padding: 10px; border: 1px solid #ddd; }
+        .table-container { margin-top: 20px; overflow-x: auto; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #6a1b9a; color: white; padding: 12px; border: 1px solid #ddd; position: sticky; top: 0; }
         td { padding: 10px; border: 1px solid #ddd; text-align: left; }
         tr:nth-child(even) { background: #f9f9f9; }
     </style>
@@ -22,10 +25,12 @@
 <body>
 
 <div class="container">
+    <h2>Booking Performance Region Sumatera</h2>
+    
     <div class="filter-container">
-        <select id="BranchFilter"><option value="">Semua Branch</option></select>
+        <select id="BranchFilter"><option value="">Semua Main Branch</option></select>
         <select id="OfficeFilter"><option value="">Semua Office</option></select>
-        <button onclick="resetFilter()" style="padding:10px 20px; cursor:pointer;">Reset</button>
+        <button onclick="resetFilter()">Reset</button>
     </div>
 
     <div id="chart-container">
@@ -44,49 +49,73 @@
 let tableData = [];
 let myChart = null;
 
-// --- SOLUSI UTAMA: Fungsi Pembersih Angka (Menghapus Koma Ribuan) ---
+// --- FUNGSI MEMBERSIHKAN KOMA RIBUAN ---
 function cleanNumber(val) {
     if (typeof val === 'number') return val;
-    if (!val || val === "-") return 0;
-    
-    // Hapus tanda koma (,) karena di data Anda koma adalah pemisah ribuan
-    // Contoh: "1,038,390,113" menjadi "1038390113"
+    if (!val || val === "-" || val === "") return 0;
+    // Menghapus koma agar "1,038,390,113" menjadi "1038390113"
     let cleaned = val.toString().replace(/,/g, '');
     return parseFloat(cleaned) || 0;
 }
 
+// --- AMBIL DATA DARI JSON ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Simulasi data sesuai gambar Anda
-    tableData = [
-        {"Main Branch": "BENGKULU", "Office": "BENGKULU", "Total": "1,038,390,113"},
-        {"Main Branch": "BENGKULU", "Office": "KCP CURUP", "Total": "340,565,765"},
-        {"Main Branch": "BENGKULU", "Office": "KCP ARGA MAKMUR", "Total": "-"},
-        {"Main Branch": "BENGKULU", "Office": "KCP MANNA BENGKULU", "Total": "42,380,689"},
-        {"Main Branch": "BENGKULU", "Office": "JAMBI", "Total": "453,548,464"},
-        {"Main Branch": "BENGKULU", "Office": "KCP MUARA BUNGO", "Total": "328,064,988"}
-    ];
-    init();
+    fetch('Dataset.json')
+        .then(res => res.json())
+        .then(data => {
+            tableData = data;
+            initDashboard();
+        })
+        .catch(err => {
+            console.error("Gagal memuat Dataset.json:", err);
+            alert("Dataset.json tidak ditemukan atau format salah.");
+        });
 });
 
-function init() {
+function initDashboard() {
+    if (tableData.length === 0) return;
+
+    // Header Tabel
     const columns = Object.keys(tableData[0]);
     document.getElementById('tableHead').innerHTML = columns.map(c => `<th>${c}</th>`).join('');
     
-    const branches = [...new Set(tableData.map(d => d['Main Branch']))];
-    document.getElementById('BranchFilter').innerHTML += branches.map(b => `<option value="${b}">${b}</option>`).join('');
+    // Isi Dropdown Branch secara otomatis dari data JSON
+    const branches = [...new Set(tableData.map(d => d['Main Branch']))].sort();
+    const branchSelect = document.getElementById('BranchFilter');
+    branchSelect.innerHTML = '<option value="">Semua Main Branch</option>' + 
+        branches.map(b => `<option value="${b}">${b}</option>`).join('');
     
-    document.getElementById('BranchFilter').addEventListener('change', update);
-    document.getElementById('OfficeFilter').addEventListener('change', update);
-    update();
+    // Event Listener
+    document.getElementById('BranchFilter').addEventListener('change', function() {
+        updateOfficeFilter(this.value);
+        updateUI();
+    });
+    document.getElementById('OfficeFilter').addEventListener('change', updateUI);
+    
+    updateUI();
 }
 
-function update() {
-    const bVal = document.getElementById('BranchFilter').value;
-    const oVal = document.getElementById('OfficeFilter').value;
-
-    const filtered = tableData.filter(d => (!bVal || d['Main Branch'] === bVal) && (!oVal || d['Office'] === oVal));
+function updateOfficeFilter(selectedBranch) {
+    const officeSelect = document.getElementById('OfficeFilter');
+    const filteredOffices = tableData
+        .filter(d => !selectedBranch || d['Main Branch'] === selectedBranch)
+        .map(d => d['Office']);
     
-    // Hitung Map untuk Chart
+    const offices = [...new Set(filteredOffices)].sort();
+    officeSelect.innerHTML = '<option value="">Semua Office</option>' + 
+        offices.map(o => `<option value="${o}">${o}</option>`).join('');
+}
+
+function updateUI() {
+    const branchVal = document.getElementById('BranchFilter').value;
+    const officeVal = document.getElementById('OfficeFilter').value;
+
+    const filtered = tableData.filter(d => 
+        (!branchVal || d['Main Branch'] === branchVal) && 
+        (!officeVal || d['Office'] === officeVal)
+    );
+
+    // Proses data untuk Chart
     const map = {};
     filtered.forEach(d => {
         const val = cleanNumber(d['Total']);
@@ -97,8 +126,9 @@ function update() {
     let labels = entries.map(e => e[0]);
     let values = entries.map(e => e[1]);
 
-    if (bVal) {
-        labels.unshift("TOTAL " + bVal);
+    // Tambahkan TOTAL Branch jika ada branch yang dipilih
+    if (branchVal && values.length > 0) {
+        labels.unshift("TOTAL " + branchVal);
         values.unshift(values.reduce((a, b) => a + b, 0));
     }
 
@@ -110,7 +140,8 @@ function renderChart(labels, values) {
     const ctx = document.getElementById('myBarChart').getContext('2d');
     if (myChart) myChart.destroy();
 
-    document.getElementById('chart-container').style.height = (labels.length * 45 + 100) + "px";
+    // Tinggi chart dinamis agar tidak sesak
+    document.getElementById('chart-container').style.height = (labels.length * 40 + 120) + "px";
 
     myChart = new Chart(ctx, {
         type: 'bar',
@@ -120,19 +151,17 @@ function renderChart(labels, values) {
             datasets: [{
                 data: values,
                 backgroundColor: labels.map(l => l.includes('TOTAL') ? '#4E337E' : '#36A2EB'),
-                barPercentage: 0.8
+                barPercentage: 0.7
             }]
         },
         options: {
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            layout: { 
-                padding: { right: 150 } // Ruang ekstra agar angka Miliar tidak terpotong
-            },
+            layout: { padding: { right: 150 } }, // Ruang agar angka Miliar tidak terpotong
             scales: { 
                 x: { display: false }, 
-                y: { grid: { display: false }, ticks: { font: { size: 10 } } } 
+                y: { grid: { display: false } } 
             },
             plugins: {
                 legend: { display: false },
@@ -142,7 +171,6 @@ function renderChart(labels, values) {
                     offset: 10,
                     color: '#000',
                     font: { weight: 'bold', size: 11 },
-                    // Format tampilan angka dengan titik pemisah ribuan di Chart
                     formatter: (v) => v.toLocaleString('id-ID')
                 }
             }
@@ -158,8 +186,8 @@ function renderTable(data) {
 
 function resetFilter() {
     document.getElementById('BranchFilter').value = "";
-    document.getElementById('OfficeFilter').value = "";
-    update();
+    updateOfficeFilter("");
+    updateUI();
 }
 </script>
 </body>
