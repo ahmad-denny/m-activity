@@ -4,28 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>M-Booking Performance Region Sumatera</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; margin: 0; }
         .container { width: 95%; max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08); }
-        #chart-container { position: relative; width: 100%; margin: 20px auto; min-height: 300px; }
         h2 { color: white; background: linear-gradient(90deg, #6a1b9a, #8e24aa); padding: 15px; border-radius: 8px; margin-top: 0; }
+        
+        /* Filter Styles */
         .filter-container { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 20px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e9ecef; }
         select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; flex: 1; min-width: 150px; }
+        
+        /* Button Styles */
         .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; color: white; }
         .reset-btn { background: #28a745; }
         .back-btn { background: #dc3545; }
         .print-btn { background: #6f42c1; }
         .export-btn { background: #f39c12; }
+        .btn:hover { opacity: 0.8; }
+
+        #chart-container { position: relative; width: 100%; margin: 20px auto; min-height: 300px; }
+
+        /* Table Styles */
         .table-container { overflow-x: auto; margin-top: 20px; border-radius: 8px; border: 1px solid #eee; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { background-color: #6a1b9a; color: white; padding: 12px 8px; position: sticky; top: 0; border: 1px solid #5e1689; }
         td { padding: 10px; border: 1px solid #eee; text-align: left; }
-        .text-right { text-align: right; } /* Untuk merapikan angka ke kanan */
+        .text-right { text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9f9f9; }
+
         @media screen and (max-width: 768px) { .filter-container { flex-direction: column; align-items: stretch; } select, .btn { width: 100%; } }
     </style>
 </head>
@@ -42,6 +54,7 @@
             <option value="active">Ada Booking</option>
             <option value="inactive">Tidak Ada Booking</option>
         </select>
+        
         <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
         <button class="btn print-btn" onclick="printTable()">Print</button>
         <button class="btn export-btn" onclick="exportToExcel()">Export XLS</button>
@@ -63,7 +76,7 @@ const ChartDataLabels = window.ChartDataLabels;
 let myChart = null;
 let tableData = [];
 
-// Fungsi membersihkan angka dari format ribuan agar bisa diproses matematik
+// Helper: Bersihkan string angka (koma) agar jadi float murni
 function cleanNumber(val) {
     if (typeof val === 'number') return val;
     if (!val || val === "-" || val === "") return 0;
@@ -71,11 +84,10 @@ function cleanNumber(val) {
     return parseFloat(cleaned) || 0;
 }
 
-// Fungsi memformat angka kembali ke format Indonesia (1.000.000)
+// Helper: Format ke standar Indonesia (titik ribuan)
 function formatIndo(val) {
     const num = cleanNumber(val);
-    if (num === 0) return "-";
-    return num.toLocaleString('id-ID');
+    return num === 0 ? "-" : num.toLocaleString('id-ID');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -93,6 +105,7 @@ function initializeDashboard() {
     const columns = Object.keys(tableData[0]);
     document.getElementById('tableHead').innerHTML = columns.map(col => `<th>${col}</th>`).join('');
     updateMainFilters();
+    
     document.getElementById('BranchFilter').addEventListener('change', (e) => {
         updateOfficeFilter(e.target.value);
         filterAndRender();
@@ -151,16 +164,12 @@ function filterAndRender() {
 
     drawChart(labels, values);
 
-    // Update Table dengan Format Ribuan
+    // Update Table
     const tableBody = document.getElementById('tableBody');
     tableBody.innerHTML = filtered.map(row => {
         let cells = Object.entries(row).map(([key, val]) => {
-            // Jika kolom adalah Total atau kolom angka lainnya, beri format ribuan & rata kanan
-            const isNumberColumn = ["Total", "EMAS", "MULTIGUNA", "PROHAJJ", "NON CONSUMER", "KPR"].includes(key.toUpperCase());
-            if (isNumberColumn) {
-                return `<td class="text-right">${formatIndo(val)}</td>`;
-            }
-            return `<td>${val}</td>`;
+            const isNumber = ["TOTAL", "EMAS", "MULTIGUNA", "PROHAJJ", "KPR", "NON CONSUMER"].includes(key.toUpperCase());
+            return isNumber ? `<td class="text-right">${formatIndo(val)}</td>` : `<td>${val}</td>`;
         }).join('');
         return `<tr>${cells}</tr>`;
     }).join('');
@@ -199,6 +208,62 @@ function drawChart(labels, values) {
     });
 }
 
+async function exportToExcel() {
+    if (typeof ExcelJS === 'undefined') {
+        alert("Library ExcelJS belum terload. Periksa koneksi internet.");
+        return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Booking Performance');
+
+    const table = document.getElementById("dataTable");
+    
+    // 1. Ambil Header
+    const headerRow = Array.from(table.tHead.rows[0].cells).map(cell => cell.innerText);
+    const excelHeader = worksheet.addRow(headerRow);
+
+    // Styling Header
+    excelHeader.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6A1B9A' } };
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.border = {
+            top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}
+        };
+    });
+
+    // 2. Ambil Data
+    const bodyRows = Array.from(table.tBodies[0].rows);
+    bodyRows.forEach(row => {
+        const rowData = Array.from(row.cells).map(cell => cell.innerText);
+        const newRow = worksheet.addRow(rowData);
+
+        newRow.eachCell((cell, colNumber) => {
+            cell.border = {
+                top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'}
+            };
+            // Rata kanan untuk kolom angka (index > 2)
+            if (colNumber > 2) cell.alignment = { horizontal: 'right' };
+        });
+    });
+
+    // 3. Auto-fit kolom
+    worksheet.columns.forEach(column => {
+        let maxLen = 0;
+        column.eachCell({ includeEmpty: true }, (cell) => {
+            const len = cell.value ? cell.value.toString().length : 10;
+            if (len > maxLen) maxLen = len;
+        });
+        column.width = maxLen + 5;
+    });
+
+    // 4. Save
+    const branch = document.getElementById('BranchFilter').value || "Sumatera";
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `Booking_Performance_${branch}.xlsx`);
+}
+
 function resetFilter() {
     document.getElementById('BranchFilter').value = "";
     document.getElementById('ActivityStatusFilter').value = "all";
@@ -207,45 +272,6 @@ function resetFilter() {
 }
 
 function printTable() { window.print(); }
-
-function exportToExcel() {
-    if (typeof XLSX === 'undefined') {
-        alert("Library Excel belum siap.");
-        return;
-    }
-
-    const table = document.getElementById("dataTable");
-    
-    // 1. Mengambil tabel ke worksheet
-    // raw: false memastikan format tampilan di web (seperti titik ribuan) ikut terbawa sebagai teks
-    const ws = XLSX.utils.table_to_sheet(table, { raw: false });
-
-    // 2. Logika AutoFit Lebar Kolom
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    const colWidths = [];
-    
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-        let maxWidth = 10; // Lebar minimal
-        for (let R = range.s.r; R <= range.e.r; ++R) {
-            const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
-            if (cell && cell.v) {
-                const len = cell.v.toString().length;
-                if (len > maxWidth) maxWidth = len;
-            }
-        }
-        colWidths.push({ wch: maxWidth + 2 }); // Tambah padding
-    }
-    ws['!cols'] = colWidths;
-
-    // 3. Membuat file Excel
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Booking Performance");
-
-    // 4. Penamaan file sesuai filter
-    const branchName = document.getElementById('BranchFilter').value || "All_Branch";
-    XLSX.writeFile(wb, `Booking_${branchName}.xlsx`);
-}
-    
 function openPage() { window.location.href = 'https://m-direct.vercel.app/'; }
 </script>
 </body>
