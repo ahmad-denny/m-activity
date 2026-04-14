@@ -18,12 +18,13 @@
         .header-title { 
             color: white; 
             background: linear-gradient(90deg, #6a1b9a, #8e24aa); 
-            padding: 15px; 
+            padding: 20px; 
             border-radius: 8px; 
             margin-top: 0;
+            margin-bottom: 20px;
         }
-        .header-title h2 { margin: 0; font-size: 22px; }
-        .as-of-date { font-size: 14px; opacity: 0.9; font-weight: normal; display: block; margin-top: 5px; }
+        .header-title h2 { margin: 0; font-size: 24px; font-weight: bold; }
+        .as-of-date { font-size: 14px; opacity: 0.9; font-weight: normal; display: block; margin-top: 8px; }
         
         .filter-container { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 20px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e9ecef; }
         select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; flex: 1; min-width: 150px; }
@@ -57,7 +58,7 @@
 
 <div class="container">
     <div class="header-title">
-        <h2>M-Booking Performance Region Sumatera</h2>
+        <h2 id="mainHeader">M-Booking Performance Region Sumatera</h2>
         <span id="dateDisplay" class="as-of-date"></span>
     </div>
     
@@ -170,6 +171,14 @@ function filterAndRender() {
     const branchVal = document.getElementById('BranchFilter').value;
     const officeVal = document.getElementById('OfficeFilter').value;
     const statusVal = document.getElementById('ActivityStatusFilter').value;
+    const headerElem = document.getElementById('mainHeader');
+
+    // Update Judul Dinamis
+    if (!branchVal) {
+        headerElem.innerText = "M-Booking Performance Region Sumatera (Top 10 Office)";
+    } else {
+        headerElem.innerText = "M-Booking Performance Region Sumatera";
+    }
 
     const filtered = tableData.filter(row => {
         const matchBranch = !branchVal || row['Main Branch'] === branchVal;
@@ -189,25 +198,22 @@ function filterAndRender() {
 
     let entries = Object.entries(officeMap).sort((a, b) => b[1] - a[1]);
     
-    // VARIABEL UNTUK CHART
     let chartLabels = [];
     let chartValues = [];
     const rawTotalRegion = entries.reduce((acc, curr) => acc + curr[1], 0);
 
     if (!branchVal) {
-        // JIKA SEMUA MAIN BRANCH: AMBIL TOP 10 SAJA UNTUK CHART
         let top10 = entries.slice(0, 10);
         chartLabels = top10.map(e => e[0]);
         chartValues = top10.map(e => Math.round(e[1] / 1000000));
         
-        chartLabels.unshift("Total Region Sumatera");
+        chartLabels.unshift("TOTAL REGION SUMATERA");
         chartValues.unshift(Math.round(rawTotalRegion / 1000000));
     } else {
-        // JIKA BRANCH DIPILIH: TAMPILKAN SEMUA OFFICE BRANCH TERSEBUT
         chartLabels = entries.map(e => e[0]);
         chartValues = entries.map(e => Math.round(e[1] / 1000000));
         
-        chartLabels.unshift("Total " + branchVal);
+        chartLabels.unshift("TOTAL " + branchVal);
         chartValues.unshift(Math.round(rawTotalRegion / 1000000));
     }
 
@@ -232,8 +238,7 @@ function drawChart(labels, values, isTop10) {
     const chartHeight = labels.length > 20 ? labels.length * 30 : labels.length * 45 + 100;
     document.getElementById('chart-container').style.height = chartHeight + "px";
     
-    // Tambahkan teks Top 10 ke judul dataset jika aktif
-    const datasetLabel = isTop10 ? 'Top 10 Office Booking' : 'Booking (dalam jutaan)';
+    const datasetLabel = isTop10 ? 'Performance (Top 10 Office - Jutaan)' : 'Performance (Jutaan)';
 
     myChart = new Chart(ctx, {
         type: 'bar',
@@ -241,9 +246,9 @@ function drawChart(labels, values, isTop10) {
         data: {
             labels: labels,
             datasets: [{
-                // label: datasetLabel,
+                label: datasetLabel,
                 data: values,
-                backgroundColor: labels.map(l => l.includes('Total') ? '#4E337E' : '#36A2EB'),
+                backgroundColor: labels.map(l => l.includes('TOTAL') ? '#4E337E' : '#36A2EB'),
                 barPercentage: 0.7
             }]
         },
@@ -254,7 +259,7 @@ function drawChart(labels, values, isTop10) {
             layout: { padding: { right: 80 } },
             scales: { 
                 x: { 
-                    display: false, 
+                    display: true, 
                     grid: { display: false },
                     title: { display: true, text: 'Dalam Jutaan Rupiah', font: { weight: 'bold' } } 
                 }, 
