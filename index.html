@@ -45,25 +45,59 @@
         .text-right { text-align: right; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9f9f9; }
 
-        /* RESPONSIVE SMARTPHONE (MOBILE) */
+        /* RESPONSIVE SMARTPHONE (MOBILE) - VERSI RAPAT */
         @media screen and (max-width: 768px) {
             .container { padding: 10px; }
-            .header-title h2 { font-size: 18px; }
-            .filter-container { flex-direction: column; align-items: stretch; }
-            select, .btn { width: 100%; }
+            .header-title h2 { font-size: 18px; padding: 15px; }
+            .as-of-date { font-size: 12px; }
+            .filter-container { flex-direction: column; align-items: stretch; padding: 10px; gap: 8px; }
+            select, .btn { width: 100%; font-size: 13px; padding: 8px; }
+            #chart-container { min-height: 250px; margin: 10px auto; }
 
-            /* Ubah Tabel menjadi Card */
+            /* Ubah Tabel menjadi Card yang Rapat */
             table, thead, tbody, th, td, tr { display: block; }
             thead tr { position: absolute; top: -9999px; left: -9999px; }
-            tr { border: 1px solid #ccc; margin-bottom: 15px; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-            td { 
-                border: none; border-bottom: 1px solid #eee; position: relative; padding-left: 45% !important; 
-                text-align: right !important; min-height: 35px; display: flex; align-items: center; justify-content: flex-end;
+            
+            tr { 
+                border: 1px solid #ddd; 
+                margin-bottom: 12px; 
+                border-radius: 8px; 
+                background: #fff; 
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
+                overflow: hidden; /* Jaga agar border-radius tetap terlihat */
             }
+
+            td { 
+                border: none; 
+                border-bottom: 1px solid #f0f0f0; 
+                position: relative; 
+                padding: 10px 10px 10px 45% !important; /* Padding rapat */
+                text-align: right !important; 
+                font-size: 13px;
+                line-height: 1.4;
+                box-sizing: border-box;
+            }
+
             td:last-child { border-bottom: none; }
+
+            /* Ubah metode align Label agar rapat */
             td:before { 
-                content: attr(data-label); position: absolute; left: 10px; width: 40%; 
-                padding-right: 10px; white-space: nowrap; font-weight: bold; color: #6a1b9a; text-align: left;
+                content: attr(data-label); 
+                position: absolute; 
+                left: 10px; 
+                width: 40%; 
+                white-space: nowrap; 
+                font-weight: bold; 
+                color: #6a1b9a; 
+                text-align: left;
+                top: 50%; /* Tengahkan vertikal secara absolut */
+                transform: translateY(-50%);
+            }
+            
+            /* Jaga padding khusus untuk kolom text-right agar tidak numpuk */
+            .text-right {
+                font-weight: bold;
+                padding-right: 15px !important;
             }
         }
     </style>
