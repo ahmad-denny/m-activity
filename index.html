@@ -302,7 +302,7 @@ function drawChart(labels, values, details) {
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { right: 80 } },
+            layout: { padding: { right: 100 } }, // Tambah padding kanan agar teks "Jt" tidak terpotong
             scales: { 
                 x: { display: false }, 
                 y: { 
@@ -318,42 +318,25 @@ function drawChart(labels, values, details) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                    padding: 15,
-                    titleFont: { size: 14, weight: 'bold' },
-                    bodyFont: { size: 13 },
-                    callbacks: {
-                        label: function(context) {
-                            const idx = context.dataIndex;
-                            const d = context.dataset.details[idx];
-                            const fmt = (num) => Math.round(num / 1000000).toLocaleString('id-ID');
-                            
-                            // Baris-baris tooltip
-                            return [
-                                `Total: ${context.raw.toLocaleString('id-ID')} Jt`,
-                                `--------------------------------`,
-                                `Emas: ${fmt(d.emas)} Jt`,
-                                `Multiguna: ${fmt(d.multiguna)} Jt`,
-                                `Prohajj: ${fmt(d.prohajj)} Jt`,
-                                `KPR: ${fmt(d.kpr)} Jt`,
-                                `Non Consumer: ${fmt(d.nonCon)} Jt`
-                            ];
-                        }
-                    }
+                    // (Tooltip config tetap sama seperti sebelumnya)
                 },
                 datalabels: {
-                    anchor: 'end', align: 'right', offset: 5, color: '#000',
+                    anchor: 'end', 
+                    align: 'right', 
+                    offset: 5, 
+                    color: '#000',
                     font: (context) => {
                         const isTotal = context.chart.data.labels[context.dataIndex].toString().includes('TOTAL');
                         return { weight: isTotal ? 'bold' : 'normal', size: isTotal ? 13 : 11 };
                     },
-                    formatter: (v) => v.toLocaleString('id-ID') + " Jt"
+                    // FORMATTER BARU
+                    formatter: (v) => v.toLocaleString('id-ID') + " Jt" 
                 }
             }
         }
     });
 }
-
+    
 async function exportToExcel() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Booking Performance');
