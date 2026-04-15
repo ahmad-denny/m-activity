@@ -49,7 +49,7 @@
             thead tr { position: absolute; top: -9999px; left: -9999px; }
             tr { border: 1px solid #ddd; margin-bottom: 8px; border-radius: 6px; background: #fff; }
             td { border: none; border-bottom: 1px solid #f0f0f0; position: relative; padding: 6px 10px 6px 45% !important; text-align: right !important; font-size: 12px; }
-            td:before { content: attr(data-label); position: absolute; left: 10px; width: 40%; font-weight: bold; color: #6a1b9a; text-align: left; }
+            td:before { content: attr(data-label); position: absolute; left: 10px; width: 40%; font-weight: bold; color: #6a1b9a; text-align: left; top: 50%; transform: translateY(-50%); }
             td.indent-label:before { left: 25px; font-weight: normal; color: #555; }
         }
     </style>
@@ -68,7 +68,7 @@
         <select id="RankFilter">
             <option value="top10">Top 10 Booking</option>
             <option value="bottom10">Bottom 10 Booking</option>
-            <option value="all">Semua Data</option>
+            <option value="all" selected>Semua Data</option>
         </select>
         <button class="btn excel-btn" onclick="exportToExcel()">Excel</button>
         <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
@@ -156,65 +156,56 @@ function render() {
     const rVal = document.getElementById('RankFilter').value;
     const header = document.getElementById('mainHeader');
 
-    // 1. Logika Update Judul
+    // Update Judul
     if (rVal === 'top10') header.innerText = "Top 10 Booking Performance";
     else if (rVal === 'bottom10') header.innerText = "Bottom 10 Booking Performance";
     else if (bVal && oVal) header.innerText = `Booking Performance ${bVal} - ${oVal}`;
     else if (bVal) header.innerText = `Booking Performance ${bVal}`;
-    else if (rVal === 'all') header.innerText = "Booking Performance Semua Cabang";
-    else header.innerText = "Booking Performance";
+    else header.innerText = "Booking Performance Semua Cabang";
 
-    let filtered = tableData.filter(d => {
+    // Step 1: Filter Berdasarkan Dropdown Branch & Office
+    let baseFiltered = tableData.filter(d => {
         return (!bVal || getVal(d, 'Main Branch').trim() === bVal) && 
                (!oVal || getVal(d, 'Office').trim() === oVal);
     });
 
-    const map = {}; const details = {};
-    filtered.forEach(r => {
-        const off = getVal(r, 'Office').trim();
-        const tot = cleanNum(getVal(r, 'Total'));
-        map[off] = (map[off] || 0) + tot;
-        if(!details[off]) details[off] = { emas:0, multi:0, hajj:0, kpr:0, non:0 };
-        details[off].emas += cleanNum(getVal(r, 'Emas'));
-        details[off].multi += cleanNum(getVal(r, 'MultiGuna'));
-        details[off].hajj += cleanNum(getVal(r, 'Prohajj'));
-        details[off].kpr += cleanNum(getVal(r, 'KPR'));
-        details[off].non += cleanNum(getVal(r, 'Non Consumer'));
-    });
-
-    let sorted = Object.entries(map).sort((a,b) => b[1]-a[1]);
+    // Step 2: Sorting untuk Rank (Top/Bottom)
+    let sortedData = [...baseFiltered].sort((a, b) => cleanNum(getVal(b, 'Total')) - cleanNum(getVal(a, 'Total')));
     
-    // Khusus Region Sumatera & Total Main Branch Judul di Chart
-    let chartLabels = sorted.map(e=>e[0]);
-    let chartValues = sorted.map(e=>Math.round(e[1]/1000000));
-    let chartDets = sorted.map(e=>details[e[0]]);
+    // Final Data untuk Tabel
+    let finalTableData = sortedData;
+    if (rVal === 'top10') finalTableData = sortedData.slice(0, 10);
+    else if (rVal === 'bottom10') finalTableData = sortedData.slice(-10).reverse();
 
-    if (rVal === 'top10') {
-        chartLabels = chartLabels.slice(0, 10);
-        chartValues = chartValues.slice(0, 10);
-        chartDets = chartDets.slice(0, 10);
-    } else if (rVal === 'bottom10') {
-        chartLabels = chartLabels.slice(-10).reverse();
-        chartValues = chartValues.slice(-10).reverse();
-        chartDets = chartDets.slice(-10).reverse();
+    // Kalkulasi Chart Berdasarkan Data yang sudah di-rank
+    const chartLabels = finalTableData.map(d => getVal(d, 'Office').trim());
+    const chartValues = finalTableData.map(d => Math.round(cleanNum(getVal(d, 'Total')) / 1000000));
+    const chartDets = finalTableData.map(d => ({
+        emas: cleanNum(getVal(d, 'Emas')),
+        multi: cleanNum(getVal(d, 'MultiGuna')),
+        hajj: cleanNum(getVal(d, 'Prohajj')),
+        kpr: cleanNum(getVal(d, 'KPR')),
+        non: cleanNum(getVal(d, 'Non Consumer'))
+    }));
+
+    // Tambahkan Total Region (Hanya jika tidak sedang filter Office tunggal)
+    if (!oVal) {
+        const regTotal = tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'Total')), 0);
+        chartLabels.unshift("TOTAL REGION SUMATERA");
+        chartValues.unshift(Math.round(regTotal/1000000));
+        chartDets.unshift({
+            emas: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'Emas')), 0),
+            multi: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'MultiGuna')), 0),
+            hajj: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'Prohajj')), 0),
+            kpr: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'KPR')), 0),
+            non: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'Non Consumer')), 0)
+        });
     }
-
-    // Tambahkan Total Region di Paling Atas Chart
-    const regTotal = tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'Total')), 0);
-    const regDets = {
-        emas: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'Emas')), 0),
-        multi: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'MultiGuna')), 0),
-        hajj: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'Prohajj')), 0),
-        kpr: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'KPR')), 0),
-        non: tableData.reduce((acc, curr) => acc + cleanNum(getVal(curr, 'Non Consumer')), 0)
-    };
-    chartLabels.unshift("TOTAL REGION SUMATERA");
-    chartValues.unshift(Math.round(regTotal/1000000));
-    chartDets.unshift(regDets);
 
     draw(chartLabels, chartValues, chartDets);
 
-    document.getElementById('tableBody').innerHTML = filtered.map(row => {
+    // Update Tabel - SEKARANG SESUAI DENGAN RANK
+    document.getElementById('tableBody').innerHTML = finalTableData.map(row => {
         return `<tr>${Object.entries(row).map(([k, v]) => {
             const kc = k.trim().toUpperCase();
             const isProd = ["EMAS", "MULTIGUNA", "PROHAJJ", "KPR", "NON CONSUMER"].includes(kc);
@@ -232,7 +223,7 @@ function render() {
 function draw(labels, data, dets) {
     const ctx = document.getElementById('myBarChart').getContext('2d');
     if(myChart) myChart.destroy();
-    document.getElementById('chart-container').style.height = (labels.length * 35 + 50) + "px";
+    document.getElementById('chart-container').style.height = (labels.length * 35 + 60) + "px";
     myChart = new Chart(ctx, {
         type: 'bar', plugins: [ChartDataLabels],
         data: { labels, datasets: [{ data, backgroundColor: labels.map(l => l.includes('TOTAL') ? '#2E1A47' : '#36A2EB'), details: dets }] },
