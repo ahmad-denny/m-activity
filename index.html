@@ -23,11 +23,11 @@
         .header-title h2 { margin: 0; font-size: 16px; font-weight: bold; }
         .as-of-date { font-size: 11px; opacity: 0.9; display: block; margin-top: 3px; }
         
-        /* --- FILTER CONTAINER (PC: 1 Baris Panjang) --- */
+        /* --- FILTER CONTAINER (Sama Tinggi) --- */
         .filter-container { 
             display: flex; 
-            flex-wrap: nowrap; /* Tetap satu baris di PC */
-            align-items: center;
+            flex-wrap: nowrap; 
+            align-items: center; /* Menyeimbangkan elemen secara vertikal */
             gap: 8px; 
             padding: 12px; 
             background: #f8f9fa; 
@@ -36,38 +36,45 @@
             border: 1px solid #e9ecef; 
         }
 
-        .filter-group {
+        .filter-group, .button-group {
             display: flex;
             gap: 8px;
-            flex: 2; /* Mengambil ruang lebih besar untuk dropdown */
+            align-items: center;
         }
 
-        .button-group {
+        .filter-group { flex: 3; }
+        .button-group { flex: 1; }
+
+        /* Samakan Tinggi Select dan Button */
+        select, .btn { 
+            height: 38px; /* Tinggi Fix agar seragam */
+            box-sizing: border-box; 
+            border-radius: 6px; 
+            font-size: 13px;
+            margin: 0;
             display: flex;
-            gap: 8px;
-            flex: 1; /* Ruang lebih kecil untuk tombol */
+            align-items: center;
+            justify-content: center;
         }
 
         select { 
-            padding: 8px; 
+            padding: 0 8px; 
             border: 1px solid #ddd; 
-            border-radius: 6px; 
             outline: none; 
-            font-size: 13px; 
             flex: 1;
             min-width: 0;
+            background-color: white;
         }
         
         .btn { 
-            padding: 8px 12px; 
+            padding: 0 12px; 
             border: none; 
-            border-radius: 6px; 
             cursor: pointer; 
             font-weight: bold; 
             color: white; 
-            font-size: 12px; 
             flex: 1;
             white-space: nowrap;
+            text-decoration: none;
         }
         .reset-btn { background: #28a745; }
         .back-btn { background: #dc3545; }
@@ -86,36 +93,36 @@
         /* --- MOBILE RESPONSIVE (HP) --- */
         @media screen and (max-width: 768px) {
             .filter-container {
-                flex-direction: column; /* Stack vertikal untuk grupnya */
-                flex-wrap: wrap;
+                flex-direction: column;
+                align-items: stretch;
             }
             
             .filter-group, .button-group {
-                width: 100%; /* Lebar penuh di HP */
+                width: 100%;
                 flex: none;
             }
 
-            /* Main Branch & Office tetap 1 baris di HP */
-            .filter-group select:not(#RankFilter) {
-                flex: 1;
+            .filter-group { 
+                display: flex;
+                flex-wrap: wrap; 
+                gap: 5px;
             }
 
-            /* Rank Filter dibuat baris sendiri di HP agar tidak sesak */
+            /* Main Branch & Office tetap 1 baris */
+            .filter-row-mobile {
+                display: flex;
+                gap: 5px;
+                width: 100%;
+            }
+
             #RankFilter {
                 width: 100%;
-                order: 2;
             }
-            
-            .filter-group { order: 1; }
-            .button-group { order: 3; }
 
-            /* Tabel Mobile */
-            table, thead, tbody, th, td, tr { display: block; }
-            thead tr { position: absolute; top: -9999px; left: -9999px; }
-            tr { border: 1px solid #ddd; margin-bottom: 8px; border-radius: 6px; background: #fff; }
-            td { border: none; border-bottom: 1px solid #f0f0f0; position: relative; padding: 6px 10px 6px 45% !important; text-align: right !important; font-size: 12px; }
-            td:before { content: attr(data-label); position: absolute; left: 10px; width: 40%; font-weight: bold; color: #6a1b9a; text-align: left; top: 50%; transform: translateY(-50%); }
-            td.indent-label:before { left: 25px; font-weight: normal; color: #555; }
+            select, .btn {
+                height: 35px; /* Sedikit lebih ramping di HP */
+                font-size: 11px;
+            }
         }
     </style>
 </head>
@@ -129,15 +136,16 @@
     
     <div class="filter-container">
         <div class="filter-group">
-            <select id="BranchFilter"><option value="">Semua MB</option></select>
-            <select id="OfficeFilter"><option value="">Semua Office</option></select>
+            <div class="filter-row-mobile">
+                <select id="BranchFilter"><option value="">Semua MB</option></select>
+                <select id="OfficeFilter"><option value="">Semua Office</option></select>
+            </div>
+            <select id="RankFilter">
+                <option value="top10" selected>Top 10</option>
+                <option value="bottom10">Bottom 10</option>
+                <option value="all">Semua</option>
+            </select>
         </div>
-
-        <select id="RankFilter">
-            <option value="top10" selected>Top 10</option>
-            <option value="bottom10">Bottom 10</option>
-            <option value="all">Semua</option>
-        </select>
 
         <div class="button-group">
             <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
@@ -156,7 +164,6 @@
 </div>
 
 <script>
-/* --- JAVASCRIPT TETAP SAMA SEPERTI SEBELUMNYA --- */
 let myChart = null;
 let tableData = [];
 
