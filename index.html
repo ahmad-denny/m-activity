@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-Direct Performance Region Sumatera</title>
+    <title>M-Booking Performance Region Sumatera</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -129,7 +129,7 @@
 
 <div class="container">
     <div class="header-title">
-        <h2 id="mainHeader">M-Direct Performance Sumatera</h2>
+        <h2 id="mainHeader">M-Booking Performance Sumatera</h2>
         <span id="dateDisplay" class="as-of-date"></span>
     </div>
     
@@ -155,7 +155,7 @@
     <div class="button-group">
         <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
         <button class="btn print-btn" onclick="window.print()">Print</button>
-        <button class="btn back-btn" onclick="openPage()">M-Booking</button>
+        <button class="btn back-btn" onclick="openPage()">M-Direct</button>
     </div>
 
     <div id="loader">
@@ -341,7 +341,7 @@ function draw(labels, data, dets) {
 }
 
 function resetFilter() { location.reload(); }
-function openPage() { window.location.href = 'https://m-direct.vercel.app/'; }
+function openPage() { window.location.href = 'https://M-Booking.vercel.app/'; }
 </script>
 </body>
 </html>
