@@ -23,10 +23,11 @@
         .header-title h2 { margin: 0; font-size: 16px; font-weight: bold; }
         .as-of-date { font-size: 11px; opacity: 0.9; display: block; margin-top: 3px; }
         
-        /* Filter Styles */
+        /* --- FILTER CONTAINER (PC: 1 Baris Panjang) --- */
         .filter-container { 
             display: flex; 
-            flex-direction: column; 
+            flex-wrap: nowrap; /* Tetap satu baris di PC */
+            align-items: center;
             gap: 8px; 
             padding: 12px; 
             background: #f8f9fa; 
@@ -35,10 +36,16 @@
             border: 1px solid #e9ecef; 
         }
 
-        .filter-row, .button-row {
+        .filter-group {
             display: flex;
             gap: 8px;
-            width: 100%;
+            flex: 2; /* Mengambil ruang lebih besar untuk dropdown */
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex: 1; /* Ruang lebih kecil untuk tombol */
         }
 
         select { 
@@ -48,24 +55,22 @@
             outline: none; 
             font-size: 13px; 
             flex: 1;
-            min-width: 0; /* Mencegah elemen meluap di flexbox */
+            min-width: 0;
         }
         
         .btn { 
-            padding: 10px; 
+            padding: 8px 12px; 
             border: none; 
             border-radius: 6px; 
             cursor: pointer; 
             font-weight: bold; 
-            transition: 0.3s; 
             color: white; 
-            font-size: 13px; 
+            font-size: 12px; 
             flex: 1;
+            white-space: nowrap;
         }
-        .excel-btn { background: #1d6f42; }
         .reset-btn { background: #28a745; }
         .back-btn { background: #dc3545; }
-        .btn:hover { opacity: 0.8; }
 
         #chart-container { position: relative; width: 100%; margin: 10px auto; min-height: 250px; }
 
@@ -78,16 +83,37 @@
         .text-right { text-align: right; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9f9f9; }
 
-        /* Mobile Responsive */
+        /* --- MOBILE RESPONSIVE (HP) --- */
         @media screen and (max-width: 768px) {
-            .header-title h2 { font-size: 14px; }
-            .filter-row, .button-row { gap: 5px; }
-            select, .btn { font-size: 13px; padding: 8px 4px; }
+            .filter-container {
+                flex-direction: column; /* Stack vertikal untuk grupnya */
+                flex-wrap: wrap;
+            }
+            
+            .filter-group, .button-group {
+                width: 100%; /* Lebar penuh di HP */
+                flex: none;
+            }
 
+            /* Main Branch & Office tetap 1 baris di HP */
+            .filter-group select:not(#RankFilter) {
+                flex: 1;
+            }
+
+            /* Rank Filter dibuat baris sendiri di HP agar tidak sesak */
+            #RankFilter {
+                width: 100%;
+                order: 2;
+            }
+            
+            .filter-group { order: 1; }
+            .button-group { order: 3; }
+
+            /* Tabel Mobile */
             table, thead, tbody, th, td, tr { display: block; }
             thead tr { position: absolute; top: -9999px; left: -9999px; }
             tr { border: 1px solid #ddd; margin-bottom: 8px; border-radius: 6px; background: #fff; }
-            td { border: none; border-bottom: 1px solid #f0f0f0; position: relative; padding: 6px 10px 6px 45% !important; text-align: right !important; font-size: 13px; }
+            td { border: none; border-bottom: 1px solid #f0f0f0; position: relative; padding: 6px 10px 6px 45% !important; text-align: right !important; font-size: 12px; }
             td:before { content: attr(data-label); position: absolute; left: 10px; width: 40%; font-weight: bold; color: #6a1b9a; text-align: left; top: 50%; transform: translateY(-50%); }
             td.indent-label:before { left: 25px; font-weight: normal; color: #555; }
         }
@@ -102,18 +128,18 @@
     </div>
     
     <div class="filter-container">
-        <div class="filter-row">
-            <select id="BranchFilter"><option value="">All Main Branch</option></select>
-            <select id="OfficeFilter"><option value="">All Office</option></select>
+        <div class="filter-group">
+            <select id="BranchFilter"><option value="">Semua MB</option></select>
+            <select id="OfficeFilter"><option value="">Semua Office</option></select>
         </div>
 
         <select id="RankFilter">
-            <option value="top10" selected>Top 10 Branch</option>
-            <option value="bottom10">Bottom 10 Branch</option>
-            <option value="all">All</option>
+            <option value="top10" selected>Top 10</option>
+            <option value="bottom10">Bottom 10</option>
+            <option value="all">Semua</option>
         </select>
 
-        <div class="button-row">
+        <div class="button-group">
             <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
             <button class="btn back-btn" onclick="openPage()">M-Direct</button>
         </div>
@@ -130,6 +156,7 @@
 </div>
 
 <script>
+/* --- JAVASCRIPT TETAP SAMA SEPERTI SEBELUMNYA --- */
 let myChart = null;
 let tableData = [];
 
@@ -172,7 +199,7 @@ function init() {
     document.getElementById('tableHead').innerHTML = cols.map(c => `<th>${c.trim()}</th>`).join('');
     
     const branches = [...new Set(tableData.map(d => getVal(d, 'Main Branch').trim()))].filter(v => v).sort();
-    document.getElementById('BranchFilter').innerHTML = '<option value="">All Main Branch</option>' + 
+    document.getElementById('BranchFilter').innerHTML = '<option value="">Semua MB</option>' + 
         branches.map(v => `<option value="${v}">${v}</option>`).join('');
     
     document.getElementById('BranchFilter').addEventListener('change', updateOfficeDropdown);
@@ -189,7 +216,7 @@ function updateOfficeDropdown() {
         .map(d => getVal(d, 'Office').trim())
     )].filter(v => v).sort();
 
-    document.getElementById('OfficeFilter').innerHTML = '<option value="">All Office</option>' + 
+    document.getElementById('OfficeFilter').innerHTML = '<option value="">Semua Office</option>' + 
         offices.map(v => `<option value="${v}">${v}</option>`).join('');
     render();
 }
