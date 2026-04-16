@@ -71,12 +71,12 @@
     </div>
     
     <div class="filter-container">
-        <select id="BranchFilter"><option value="">Semua Main Branch</option></select>
-        <select id="OfficeFilter"><option value="">Semua Office</option></select>
+        <select id="BranchFilter"><option value="">All Main Branch</option></select>
+        <select id="OfficeFilter"><option value="">All Office</option></select>
         <select id="RankFilter">
             <option value="top10" selected>Top 10 Booking</option>
             <option value="bottom10">Bottom 10 Booking</option>
-            <option value="all">Semua Data</option>
+            <option value="all">All Data</option>
         </select>
         <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
         <button class="btn back-btn" onclick="openPage()">M-Direct</button>
@@ -165,7 +165,7 @@ function init() {
     document.getElementById('tableHead').innerHTML = cols.map(c => `<th>${c.trim()}</th>`).join('');
     
     const branches = [...new Set(tableData.map(d => getVal(d, 'Main Branch').trim()))].filter(v => v).sort();
-    document.getElementById('BranchFilter').innerHTML = '<option value="">Semua Main Branch</option>' + 
+    document.getElementById('BranchFilter').innerHTML = '<option value="">All Main Branch</option>' + 
         branches.map(v => `<option value="${v}">${v}</option>`).join('');
     
     document.getElementById('BranchFilter').addEventListener('change', updateOfficeDropdown);
@@ -182,7 +182,7 @@ function updateOfficeDropdown() {
         .map(d => getVal(d, 'Office').trim())
     )].filter(v => v).sort();
 
-    document.getElementById('OfficeFilter').innerHTML = '<option value="">Semua Office</option>' + 
+    document.getElementById('OfficeFilter').innerHTML = '<option value="">All Office</option>' + 
         offices.map(v => `<option value="${v}">${v}</option>`).join('');
     render();
 }
@@ -197,7 +197,7 @@ function render() {
     else if (rVal === 'bottom10') header.innerText = "Bottom 10 Booking Performance";
     else if (bVal && oVal) header.innerText = `Booking Performance ${bVal} - ${oVal}`;
     else if (bVal) header.innerText = `Booking Performance ${bVal}`;
-    else header.innerText = "Booking Performance Semua Cabang";
+    else header.innerText = "Booking Performance All Cabang";
 
     let baseFiltered = tableData.filter(d => {
         return (!bVal || getVal(d, 'Main Branch').trim() === bVal) && 
