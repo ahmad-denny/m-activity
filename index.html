@@ -7,7 +7,6 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f0f2f5; padding: 10px; margin: 0; font-size: 13px; }
@@ -16,84 +15,64 @@
         .header-title { 
             color: white; 
             background: linear-gradient(90deg, #6a1b9a, #8e24aa); 
-            padding: 10px; 
-            border-radius: 8px; 
-            margin-bottom: 15px;
+            padding: 10px; border-radius: 8px; margin-bottom: 15px;
         }
-        .header-title h2 { margin: 0; font-size: 16px; font-weight: bold; } /* Judul tetap sedikit menonjol */
+        .header-title h2 { margin: 0; font-size: 16px; font-weight: bold; }
         .as-of-date { font-size: 13px; opacity: 0.9; display: block; margin-top: 3px; }
         
+        /* Layout Filter PC */
         .filter-container { 
-            display: flex; 
-            flex-wrap: nowrap; 
-            align-items: center; 
-            gap: 8px; 
-            padding: 12px; 
-            background: #f8f9fa; 
-            border-radius: 10px; 
-            margin-bottom: 15px; 
-            border: 1px solid #e9ecef; 
+            display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; padding: 12px; 
+            background: #f8f9fa; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e9ecef; 
         }
 
-        .filter-group, .button-group {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .filter-group { flex: 3; }
-        .button-group { flex: 1; }
+        .filter-group { display: flex; gap: 8px; flex: 3; align-items: center; }
+        .button-group { display: flex; gap: 8px; flex: 1; align-items: center; }
 
         select, .btn { 
-            height: 40px; 
-            box-sizing: border-box; 
-            border-radius: 6px; 
-            font-size: 13px; /* Set ke 13px */
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            height: 40px; box-sizing: border-box; border-radius: 6px; font-size: 13px; 
+            margin: 0; display: flex; align-items: center; justify-content: center;
         }
 
-        select { 
-            padding: 0 8px; 
-            border: 1px solid #ddd; 
-            outline: none; 
-            flex: 1;
-            min-width: 0;
-            background-color: white;
-        }
-        
-        .btn { 
-            padding: 0 12px; 
-            border: none; 
-            cursor: pointer; 
-            font-weight: bold; 
-            color: white; 
-            flex: 1;
-            white-space: nowrap;
-        }
+        select { padding: 0 8px; border: 1px solid #ddd; outline: none; flex: 1; min-width: 0; background-color: white; }
+        .btn { padding: 0 12px; border: none; cursor: pointer; font-weight: bold; color: white; flex: 1; white-space: nowrap; }
         .reset-btn { background: #28a745; }
         .back-btn { background: #dc3545; }
 
         #chart-container { position: relative; width: 100%; margin: 10px auto; min-height: 250px; }
 
+        /* Table Desktop */
         .table-container { margin-top: 15px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; } /* Set ke 13px */
-        th { background-color: #6a1b9a; color: white; padding: 10px 5px; border: 1px solid #5e1689; font-size: 13px; }
-        td { padding: 8px; border: 1px solid #eee; text-align: left; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background-color: #6a1b9a; color: white; padding: 10px 5px; border: 1px solid #5e1689; }
+        td { padding: 8px; border: 1px solid #eee; text-align: left; }
         td.clickable { color: #6a1b9a; cursor: pointer; text-decoration: underline; font-weight: 600; }
         .text-right { text-align: right; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9f9f9; }
 
+        /* --- RESPONSIVE HP (CARD MODE) --- */
         @media screen and (max-width: 768px) {
-            .filter-container { flex-direction: column; align-items: stretch; }
-            .filter-group, .button-group { width: 100%; flex: none; }
-            .filter-row-mobile { display: flex; gap: 5px; width: 100%; }
-            #RankFilter { width: 100%; }
-            select, .btn { height: 38px; font-size: 13px; }
-            td { font-size: 13px; padding-left: 45% !important; }
-            td:before { font-size: 13px; }
+            .filter-container { flex-direction: column; align-items: stretch; gap: 10px; }
+            .filter-group { flex-direction: column; width: 100%; gap: 8px; }
+            
+            /* Baris 1: MB & Office */
+            .mobile-row { display: flex; gap: 8px; width: 100%; }
+            .mobile-row select { flex: 1; }
+
+            /* Baris 2: Rank Filter (Full Width) */
+            #RankFilter { width: 100% !important; flex: none; }
+
+            /* Baris 3: Buttons */
+            .button-group { width: 100%; }
+
+            /* FORCE TABLE TO CARD MODE */
+            .table-container { border: none; }
+            table, thead, tbody, th, td, tr { display: block !important; width: 100% !important; box-sizing: border-box; }
+            thead { display: none !important; } /* Sembunyikan Header */
+            tr { border: 1px solid #ddd; margin-bottom: 12px; border-radius: 8px; background: #fff; padding: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+            td { border: none !important; border-bottom: 1px solid #f0f0f0 !important; position: relative; padding: 10px 10px 10px 45% !important; text-align: right !important; min-height: 40px; }
+            td:last-child { border-bottom: none !important; }
+            td:before { content: attr(data-label); position: absolute; left: 10px; width: 40%; font-weight: bold; color: #6a1b9a; text-align: left; white-space: nowrap; }
         }
     </style>
 </head>
@@ -107,14 +86,14 @@
     
     <div class="filter-container">
         <div class="filter-group">
-            <div class="filter-row-mobile">
+            <div class="mobile-row">
                 <select id="BranchFilter"><option value="">Semua MB</option></select>
                 <select id="OfficeFilter"><option value="">Semua Office</option></select>
             </div>
             <select id="RankFilter">
-                <option value="top10" selected>Top 10</option>
-                <option value="bottom10">Bottom 10</option>
-                <option value="all">Semua</option>
+                <option value="top10" selected>Top 10 Booking</option>
+                <option value="bottom10">Bottom 10 Booking</option>
+                <option value="all">Semua Data</option>
             </select>
         </div>
 
@@ -279,7 +258,7 @@ function render() {
 function draw(labels, data, dets) {
     const ctx = document.getElementById('myBarChart').getContext('2d');
     if(myChart) myChart.destroy();
-    document.getElementById('chart-container').style.height = (labels.length * 40 + 60) + "px";
+    document.getElementById('chart-container').style.height = (labels.length * 45 + 70) + "px";
     
     myChart = new Chart(ctx, {
         type: 'bar', 
@@ -299,34 +278,26 @@ function draw(labels, data, dets) {
             layout: { padding: { right: 80, left: 0 } },
             scales: { 
                 x: { display: false }, 
-                y: { 
-                    grid: { display: false }, 
-                    ticks: { font: { size: 13 }, autoSkip: false } 
-                } 
+                y: { grid: { display: false }, ticks: { font: { size: 13 }, autoSkip: false } } 
             },
             plugins: {
                 legend: { display: false },
                 datalabels: { 
-                    anchor: 'end', 
-                    align: 'right', 
-                    offset: 4,
+                    anchor: 'end', align: 'right', offset: 4,
                     formatter: v => v.toLocaleString('id-ID') + " Jt", 
                     font: { weight: 'bold', size: 13 }
                 },
                 tooltip: {
                     enabled: true,
                     triggerOn: 'click',
-                    bodyFontSize: 14, // Tooltip tetap terbaca jelas
                     callbacks: {
                         label: function(context) {
                             const d = context.dataset.details[context.dataIndex];
                             const f = (n) => Math.round(n/1000000).toLocaleString('id-ID') + " Jt";
                             return [
                                 `Total: ${context.raw.toLocaleString('id-ID')} Jt`,
-                                `Emas: ${f(d.emas)}`,
-                                `Multiguna: ${f(d.multi)}`,
-                                `Prohajj: ${f(d.hajj)}`,
-                                `KPR: ${f(d.kpr)}`,
+                                `Emas: ${f(d.emas)}`, `Multiguna: ${f(d.multi)}`,
+                                `Prohajj: ${f(d.hajj)}`, `KPR: ${f(d.kpr)}`,
                                 `Non Consumer: ${f(d.non)}`
                             ];
                         }
