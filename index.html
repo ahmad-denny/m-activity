@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f0f2f5; padding: 10px; margin: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f0f2f5; padding: 10px; margin: 0; font-size: 13px; }
         .container { width: 100%; max-width: 1300px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08); box-sizing: border-box; }
         
         .header-title { 
@@ -20,14 +20,13 @@
             border-radius: 8px; 
             margin-bottom: 15px;
         }
-        .header-title h2 { margin: 0; font-size: 16px; font-weight: bold; }
-        .as-of-date { font-size: 11px; opacity: 0.9; display: block; margin-top: 3px; }
+        .header-title h2 { margin: 0; font-size: 16px; font-weight: bold; } /* Judul tetap sedikit menonjol */
+        .as-of-date { font-size: 13px; opacity: 0.9; display: block; margin-top: 3px; }
         
-        /* --- FILTER CONTAINER (Sama Tinggi) --- */
         .filter-container { 
             display: flex; 
             flex-wrap: nowrap; 
-            align-items: center; /* Menyeimbangkan elemen secara vertikal */
+            align-items: center; 
             gap: 8px; 
             padding: 12px; 
             background: #f8f9fa; 
@@ -45,12 +44,11 @@
         .filter-group { flex: 3; }
         .button-group { flex: 1; }
 
-        /* Samakan Tinggi Select dan Button */
         select, .btn { 
-            height: 38px; /* Tinggi Fix agar seragam */
+            height: 40px; 
             box-sizing: border-box; 
             border-radius: 6px; 
-            font-size: 13px;
+            font-size: 13px; /* Set ke 13px */
             margin: 0;
             display: flex;
             align-items: center;
@@ -74,55 +72,28 @@
             color: white; 
             flex: 1;
             white-space: nowrap;
-            text-decoration: none;
         }
         .reset-btn { background: #28a745; }
         .back-btn { background: #dc3545; }
 
         #chart-container { position: relative; width: 100%; margin: 10px auto; min-height: 250px; }
 
-        /* Table Styles */
         .table-container { margin-top: 15px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background-color: #6a1b9a; color: white; padding: 10px 5px; border: 1px solid #5e1689; }
-        td { padding: 8px; border: 1px solid #eee; text-align: left; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; } /* Set ke 13px */
+        th { background-color: #6a1b9a; color: white; padding: 10px 5px; border: 1px solid #5e1689; font-size: 13px; }
+        td { padding: 8px; border: 1px solid #eee; text-align: left; font-size: 13px; }
         td.clickable { color: #6a1b9a; cursor: pointer; text-decoration: underline; font-weight: 600; }
         .text-right { text-align: right; font-weight: bold; }
         tr:nth-child(even) { background-color: #f9f9f9; }
 
-        /* --- MOBILE RESPONSIVE (HP) --- */
         @media screen and (max-width: 768px) {
-            .filter-container {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .filter-group, .button-group {
-                width: 100%;
-                flex: none;
-            }
-
-            .filter-group { 
-                display: flex;
-                flex-wrap: wrap; 
-                gap: 5px;
-            }
-
-            /* Main Branch & Office tetap 1 baris */
-            .filter-row-mobile {
-                display: flex;
-                gap: 5px;
-                width: 100%;
-            }
-
-            #RankFilter {
-                width: 100%;
-            }
-
-            select, .btn {
-                height: 35px; /* Sedikit lebih ramping di HP */
-                font-size: 11px;
-            }
+            .filter-container { flex-direction: column; align-items: stretch; }
+            .filter-group, .button-group { width: 100%; flex: none; }
+            .filter-row-mobile { display: flex; gap: 5px; width: 100%; }
+            #RankFilter { width: 100%; }
+            select, .btn { height: 38px; font-size: 13px; }
+            td { font-size: 13px; padding-left: 45% !important; }
+            td:before { font-size: 13px; }
         }
     </style>
 </head>
@@ -308,7 +279,6 @@ function render() {
 function draw(labels, data, dets) {
     const ctx = document.getElementById('myBarChart').getContext('2d');
     if(myChart) myChart.destroy();
-    
     document.getElementById('chart-container').style.height = (labels.length * 40 + 60) + "px";
     
     myChart = new Chart(ctx, {
@@ -326,25 +296,12 @@ function draw(labels, data, dets) {
             indexAxis: 'y', 
             responsive: true, 
             maintainAspectRatio: false,
-            onClick: (e, activeEls) => {
-                let index = -1;
-                if (activeEls.length > 0) {
-                    index = activeEls[0].index;
-                } else {
-                    const canvasPosition = Chart.helpers.getRelativePosition(e, myChart);
-                    index = myChart.scales.y.getValueForPixel(canvasPosition.y);
-                }
-                if (index >= 0 && index < labels.length) {
-                    myChart.tooltip.setActiveElements([{ datasetIndex: 0, index: index }]);
-                    myChart.update();
-                }
-            },
-            layout: { padding: { right: 70, left: 0 } },
+            layout: { padding: { right: 80, left: 0 } },
             scales: { 
                 x: { display: false }, 
                 y: { 
                     grid: { display: false }, 
-                    ticks: { font: { size: 9 }, autoSkip: false } 
+                    ticks: { font: { size: 13 }, autoSkip: false } 
                 } 
             },
             plugins: {
@@ -354,11 +311,12 @@ function draw(labels, data, dets) {
                     align: 'right', 
                     offset: 4,
                     formatter: v => v.toLocaleString('id-ID') + " Jt", 
-                    font: { weight: 'bold', size: 9 }
+                    font: { weight: 'bold', size: 13 }
                 },
                 tooltip: {
                     enabled: true,
                     triggerOn: 'click',
+                    bodyFontSize: 14, // Tooltip tetap terbaca jelas
                     callbacks: {
                         label: function(context) {
                             const d = context.dataset.details[context.dataIndex];
